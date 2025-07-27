@@ -1,14 +1,14 @@
-#include "Server.hpp"
+#include "../includes/Server.hpp"
 
-Server::Server(int port, const std::string &password) : _port(port), _password(password)
+Server::Server(int port, const std::string &password) : _port(port), _password(password), _reuse(1)
 {
 	//Create Socket
-	if ((this->_server_socket_fd = socket(AF_INET, SOCK_STREAM, 0)) < 0) //Socceti oluştur.
-		std::cout << "Socket created." << std::endl;
-	else
+	if ((this->_server_socket_fd = socket(AF_INET, SOCK_STREAM, 0)) < 0) //Socketi oluştur.
 		std::cerr << "Error creating socket." << std::endl;
+	else
+		std::cout << "Socket created." << std::endl;
 
-	setsockopt(this->_server_socket_fd, SOL_SOCKET, SO_REUSEADDR, &(int){1}, sizeof(int)); //Socket'i yeniden kullanabilmek için ayarla. Address already in use hatasını önler. 
+	setsockopt(this->_server_socket_fd, SOL_SOCKET, SO_REUSEADDR, &this->_reuse, sizeof(int)); //Socket'i yeniden kullanabilmek için ayarla. Address already in use hatasını önler. 
 
 	//Server Address
 	struct sockaddr_in server_address;
@@ -29,5 +29,109 @@ Server::Server(int port, const std::string &password) : _port(port), _password(p
 	else
 		std::cout << "Server is listening on port " << this->_port << "." << std::endl;
 
-	
+	//Running the server
+	std::vector<pollfd> pollfds; // Polling için kullanılacak file descriptor'ları tutan bir vektör.
+	pollfd serverPollFd = {this->_server_socket_fd, POLLIN, 0}; // pollfd structını doldur. fd -> sunucunun dinlediği socketler, events -> POLLIN (sadece okunabilir olaylar için), revents -> 0 (başlangıçta boş).
+	pollfds.push_back(serverPollFd); // Vektörün içine pollfd (sunucu socketini) ekler.
+
+	while (true)
+	{
+		//Poll fonksiyonu, file descriptor'lar üzerinde olay(veri var mı, gönderilebilir mi) kontrol eder ve bekler.
+		int pollFdCount = poll(pollfds.data(), pollfds.size(), -1); // pollfds vektöründeki fd'yi alır, kaç tane fd olduğunu alır, -1 ile sonsuz süre bekler. Olay olan fd sayısını döner.
+		if (pollFdCount < 0) // Eğer poll fonksiyonu başarısız olursa
+		{
+			std::cerr << "Error polling file descriptors." << std::endl;
+			continue; // Döngünün başına dön.
+		}
+		if (pollfds[0].revents & POLLIN) // Eğer sunucu socketinde okunabilir bir olay geldiyse, yeni bir bağlantı vardır demektir.
+		{
+			sockaddr_in clientAddress;
+			socklen_t clientAddressLength = sizeof(clientAddress);
+			int clientFd = accept(this->_server_socket_fd, (struct sockaddr *)&clientAddress, &clientAddressLength); // Yeni bağlantı kabul edilir.
+			if (clientFd < 0)
+			{
+				std::cerr << "Error accepting new connection." << std::endl;
+				continue;
+			}
+
+			Client newClient;
+			newClient.cliFd = clientFd;
+			newClient.port = ntohs(clientAddress.sin_port); // Client port adresinin byte sıralamasını değiştirir.
+			inet_ntop(AF_INET, &clientAddress.sin_addr, newClient.ipAddress, INET_ADDRSTRLEN); // Client IP adresini alır ve binary'den string'e çevirir.
+			this->clients.push_back(newClient); // Yeni client'ı clients vektörüne ekler.
+
+			pollfd clientPollFd = {clientFd, POLLIN, 0}; // Yeni client için pollfd struct'ını doldur.
+			pollfds.push_back(clientPollFd); // Yeni client'ın pollfd'sini pollfds vektörüne ekler.
+
+			std::cout << "New client connected: " << newClient.ipAddress << ":" << newClient.port << std::endl; // Yeni client'ın IP adresi ve portu yazdırılır.
+		}
+
+		// Verileri okuma
+		for (size_t i = 1; i < pollfds.size(); ++i)
+		{
+			Client &client = this->clients[i - 1]; // pollfds vektöründeki client'ı alır. İlk eleman sunucu socket olduğu için 1'den başlar.
+			if (pollfds[i].revents & POLLIN) // Eğer client socketinde okunabilir bir olay varsa
+			{
+				char buffer[1025];
+				int readed = recv(client.cliFd, buffer, sizeof(buffer) - 1, 0); // Client'tan veri(mesaj) alır.
+				if (readed <= 0)
+				{
+					close(client.cliFd);
+					pollfds.erase(pollfds.begin() + i); // Eğer veri okunamazsa, client bağlantısı kapatılır ve pollfds vektöründen çıkarılır.
+					this->clients.erase(this->clients.begin() + i - 1); // Client da clients vektöründen silinir.
+					--i;
+					std::cout << "Client disconnected: " << client.ipAddress << ":" << client.port << std::endl; // Client'ın bağlantısı kesildiğinde mesaj yazdırılır.
+					continue;
+				}
+				buffer[readed] = '\0'; // Okunan verinin sonuna null karakter eklenir.
+				client.buffer += buffer; // Client'ın buffer'ına okunan veri eklenir.
+			}
+
+			//Komutları ayıkla ve işle
+			size_t pos;
+			while ((pos = client.buffer.find("\n")) != std::string::npos) // Buffer'da newline bulunursa komut var demektir. Bu komut ayıklanır
+			{
+				std::string raw = trim(client.buffer.substr(0, pos)); // Buffer'dan komut alınır ve trim fonksiyonu ile başındaki ve sonundaki boşluklar kaldırılır.
+				client.buffer.erase(0, pos + 1); // Buffer'dan komut silinir. +1 ile newline karakteri de silinir.
+
+				std::vector<std::string> commands = newToken(raw); // Komutları ayırır. Her komut bir satırda olabilir.
+				for (size_t c = 0; c < commands.size(); ++c)
+					//Command parser'a gönderilecek.
+				
+				if (!client.passCheck)
+				{
+					std::cerr << "Client " << client.ipAddress << ":" << client.port << " is not authenticated(Wrong password)." << std::endl;
+					close(client.cliFd);
+					pollfds.erase(pollfds.begin() + i); // Client bağlantısı kapatılır ve pollfds vektöründen çıkarılır.
+					this->clients.erase(this->clients.begin() + i - 1); // Client da clients vektöründen silinir.
+					--i;
+					break;
+				}
+			}
+			//Verileri yazma
+			if (pollfds[i].revents & POLLOUT)
+			{
+				if (!client.messageBox.empty())
+				{
+					std::string msg = client.messageBox.front(); // Client'ın messageBox'ından ilk mesaj alınır.
+					int written = send(client.cliFd, msg.c_str(), msg.length(), 0); // Mesaj client'a gönderilir.
+					if (written <= 0)
+					{
+						close(client.cliFd);
+						pollfds.erase(pollfds.begin() + i); // Eğer mesaj gönderilemezse, client bağlantısı kapatılır ve pollfds vektöründen çıkarılır.
+						this->clients.erase(this->clients.begin() + i - 1); // Client da clients vektöründen silinir.
+						--i;
+						continue;
+					}
+					client.messageBox.erase(client.messageBox.begin()); // Mesaj gönderildikten sonra messageBox'tan silinir.
+				}
+				if (client.buffer.empty()) // Eğer client'ın buffer'ı boşsa, POLLOUT olayını kaldırır.
+					pollfds[i].events &= ~POLLOUT; // POLLOUT olayını kaldırır.
+			}
+
+			if (!client.messageBox.empty())
+				pollfds[i].events |= POLLOUT; // Eğer client'ın messageBox'ı boş değilse, POLLOUT olayını ekler.
+		}
+		
+	}
 }

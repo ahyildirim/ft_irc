@@ -7,6 +7,14 @@
 # include <stdlib.h>
 # include <vector>
 # include <netinet/in.h>
+# include <poll.h>
+# include <arpa/inet.h>
+# include <fcntl.h>
+# include <unistd.h>
+# include "Client.hpp"
+# include "Utils.hpp"
+
+class Client;
 
 class Server 
 {
@@ -16,6 +24,8 @@ class Server
 		int _server_socket_fd;
 		std::vector<int> _client_fds;
 		char _buffer[1024];
+		std::vector<Client> clients;
+		int _reuse;
 	public:
 		Server(int port, const std::string &password);
 };
