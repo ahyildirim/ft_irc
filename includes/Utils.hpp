@@ -3,9 +3,15 @@
 
 # include <string>
 # include <iostream>
-# include <sstream> // Include this header for std::istringstream
-# include <vector>  // Include this header for std::vector
-# include <string>  // Include this header for std::string
+# include <cstdlib>
+# include <sstream>
+# include <vector>
+# include <string>
+
+# define RED "\033[0;31m"
+# define GREEN "\033[0;32m"
+# define BLUE "\033[0;34m"
+# define RESET "\033[0m"
 
 int checkPort(const char *port);
 std::string trim(const std::string &str);

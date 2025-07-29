@@ -4,7 +4,7 @@
 # include <string>
 # include <iostream>
 # include <sys/socket.h>
-# include <stdlib.h>
+# include <cstdlib>
 # include <vector>
 # include <netinet/in.h>
 # include <poll.h>
@@ -27,9 +27,27 @@ class Server
 		std::vector<Client> clients;
 		int _reuse;
 
+
 	public:
+		struct Command{
+			std::string cmd;
+			void (Server::*handler)(); //içeriğe arg, client eklenecek
+		};
+
+		static const Command commandTable[];
+
 		Server(int port, const std::string &password);
 		void handleCommand(Client &client, const std::string &command);
+
+		//Commands
+		void handlePass();
+		void handleNick();
+		void handleUser();
+		void handleJoin();
+		void handlePrivmsg();
+		void handleQuit();
+		void handleTopic();
+		void handleKick();
 };
 
 #endif

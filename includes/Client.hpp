@@ -19,12 +19,12 @@ class Client
 
 		std::vector<std::string> messageBox;
 
-		bool passCheck;
 		bool isOperator;
 		bool isRegistered;
+		bool passCheck;
 
-		Client() : isOperator(0), isRegistered(0), passCheck(0), buffer("") {}
-		~Client() {}
+		Client();
+		~Client();
 
 };
 

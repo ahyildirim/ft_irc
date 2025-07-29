@@ -1,12 +1,30 @@
 #include "../includes/Server.hpp"
 
+const Server::Command Server::commandTable[] = {
+	{"PASS", &Server::handlePass},
+	{"NICK", &Server::handleNick},
+	{"USER", &Server::handleUser},
+	{"JOIN", &Server::handleJoin},
+	//{"PART", &Server::handlePart},
+	{"PRIVMSG", &Server::handlePrivmsg},
+	{"QUIT", &Server::handleQuit},
+	//{"PONG", &Server::handlePong},
+	//{"PING", &Server::handlePing},
+	//{"LIST", &Server::handleList},
+	{"TOPIC", &Server::handleTopic},
+	{"KICK", &Server::handleKick},
+	//{"MODE", &Server::handleMode},
+	//{"OPER", &Server::handleOper},
+	//{"AWAY", &Server::handleAway}
+};
+
 Server::Server(int port, const std::string &password) : _port(port), _password(password), _reuse(1)
 {
 	//Create Socket
 	if ((this->_server_socket_fd = socket(AF_INET, SOCK_STREAM, 0)) < 0) //Socketi oluştur.
-		std::cerr << "Error creating socket." << std::endl;
+		std::cerr << RED << "Error creating socket." << RESET << std::endl;
 	else
-		std::cout << "Socket created." << std::endl;
+		std::cout << GREEN << "Socket created." << RESET << std::endl;
 
 	setsockopt(this->_server_socket_fd, SOL_SOCKET, SO_REUSEADDR, &this->_reuse, sizeof(int)); //Socket'i yeniden kullanabilmek için ayarla. Address already in use hatasını önler. 
 
@@ -19,15 +37,15 @@ Server::Server(int port, const std::string &password) : _port(port), _password(p
 
 	//Bind Socket
 	if (bind(this->_server_socket_fd, (struct sockaddr *)&server_address, sizeof(server_address)) < 0) //Socket'i adresle bağla.
-		std::cerr << "Error binding socket." << std::endl;
+		std::cerr << RED << "Error binding socket." << RESET << std::endl;
 	else
-		std::cout << "Socket bound to port " << this->_port << "." << std::endl;
+		std::cout << GREEN << "Socket bound to port " << RESET << this->_port << "." << std::endl;
 
 	//Listen for Connections
 	if (listen(this->_server_socket_fd, 128) < 0) //Socket'i dinlemeye başla, 128 bağlantı kapasitesi. Daha az yapılabilir, daha çok da yapılabilir. Tercihe bağlı.
-		std::cerr << "Error listening on socket." << std::endl;
+		std::cerr << RED << "Error listening on socket." << RESET << std::endl;
 	else
-		std::cout << "Server is listening on port " << this->_port << "." << std::endl;
+		std::cout << GREEN << "Server is listening on port " << RED << this->_port << GREEN << "." << RESET << std::endl;
 
 	//Running the server
 	std::vector<pollfd> pollfds; // Polling için kullanılacak file descriptor'ları tutan bir vektör.
@@ -63,7 +81,7 @@ Server::Server(int port, const std::string &password) : _port(port), _password(p
 			pollfd clientPollFd = {clientFd, POLLIN, 0}; // Yeni client için pollfd struct'ını doldur.
 			pollfds.push_back(clientPollFd); // Yeni client'ın pollfd'sini pollfds vektörüne ekler.
 
-			std::cout << "New client connected: " << newClient.ipAddress << ":" << newClient.port << std::endl; // Yeni client'ın IP adresi ve portu yazdırılır.
+			std::cout << GREEN << "New client connected: " << RED << newClient.ipAddress << ":" << newClient.port << RESET << std::endl; // Yeni client'ın IP adresi ve portu yazdırılır.
 		}
 
 		// Verileri okuma
@@ -80,7 +98,7 @@ Server::Server(int port, const std::string &password) : _port(port), _password(p
 					pollfds.erase(pollfds.begin() + i); // Eğer veri okunamazsa, client bağlantısı kapatılır ve pollfds vektöründen çıkarılır.
 					this->clients.erase(this->clients.begin() + i - 1); // Client da clients vektöründen silinir.
 					--i;
-					std::cout << "Client disconnected: " << client.ipAddress << ":" << client.port << std::endl; // Client'ın bağlantısı kesildiğinde mesaj yazdırılır.
+					std::cout << RED << "Client disconnected: " << GREEN << client.ipAddress << ":" << client.port << RESET << std::endl; // Client'ın bağlantısı kesildiğinde mesaj yazdırılır.
 					continue;
 				}
 				buffer[readed] = '\0'; // Okunan verinin sonuna null karakter eklenir.
@@ -96,11 +114,11 @@ Server::Server(int port, const std::string &password) : _port(port), _password(p
 
 				std::vector<std::string> commands = newToken(raw); // Komutları ayırır. Her komut bir satırda olabilir.
 				for (size_t c = 0; c < commands.size(); ++c)
-					//Command parser'a gönderilecek.
+					Server::handleCommand(client, commands[c]); // Her komut için handleCommand fonksiyonu çağrılır.
 				
 				if (!client.passCheck)
 				{
-					std::cerr << "Client " << client.ipAddress << ":" << client.port << " is not authenticated(Wrong password)." << std::endl;
+					std::cerr << "Client " << client.ipAddress << ":" << client.port << " is not authenticated (Wrong password)." << std::endl;
 					close(client.cliFd);
 					pollfds.erase(pollfds.begin() + i); // Client bağlantısı kapatılır ve pollfds vektöründen çıkarılır.
 					this->clients.erase(this->clients.begin() + i - 1); // Client da clients vektöründen silinir.
@@ -136,15 +154,25 @@ Server::Server(int port, const std::string &password) : _port(port), _password(p
 	}
 }
 
-void handleCommand(Client &client, const std::string &command)
+void Server::handleCommand(Client &client, const std::string &command)
 {
 	std::vector<std::string> tokens = splitCommand(command, 1); // Komutu ayırır. İlk kelime komut, ikinci kelime argüman olur.
 
+	(void)client; //Silinecek, warning i engellemek için kullanıldı.
 	if (tokens.empty())
 		return ;
 	
-	std::string command = tokens[0];
+	std::string _command = tokens[0];
 	std::string arg = (tokens.size() > 1) ? tokens[1] : ""; // Eğer ikinci kelime varsa arg olarak alır, yoksa boş string alır.
 
-	
+	for (size_t i = 0; i < sizeof(commandTable) / sizeof(Command); ++i)
+	{
+		if (commandTable[i].cmd == _command) // Eğer komut tablosunda komut bulunursa
+		{
+			(this->*commandTable[i].handler)(); // Komutun handler fonksiyonunu çağırır. (// arg, client argüman olarak verilecek)
+			return;
+		}
+	}
+
+	std::cout << RED << "Unknown command: " << _command << RESET << std::endl; // Eğer komut bulunamazsa, bilinmeyen komut mesajı yazdırılır.
 }
