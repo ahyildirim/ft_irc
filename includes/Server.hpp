@@ -26,8 +26,10 @@ class Server
 		char _buffer[1024];
 		std::vector<Client> clients;
 		int _reuse;
+
 	public:
 		Server(int port, const std::string &password);
+		void handleCommand(Client &client, const std::string &command);
 };
 
 #endif

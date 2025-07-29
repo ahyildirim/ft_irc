@@ -10,5 +10,6 @@
 int checkPort(const char *port);
 std::string trim(const std::string &str);
 std::vector<std::string> newToken(const std::string &str);
+std::vector<std::string> splitCommand(const std::string &str, int trim);
 
 #endif

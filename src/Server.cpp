@@ -135,3 +135,16 @@ Server::Server(int port, const std::string &password) : _port(port), _password(p
 		
 	}
 }
+
+void handleCommand(Client &client, const std::string &command)
+{
+	std::vector<std::string> tokens = splitCommand(command, 1); // Komutu ayırır. İlk kelime komut, ikinci kelime argüman olur.
+
+	if (tokens.empty())
+		return ;
+	
+	std::string command = tokens[0];
+	std::string arg = (tokens.size() > 1) ? tokens[1] : ""; // Eğer ikinci kelime varsa arg olarak alır, yoksa boş string alır.
+
+	
+}

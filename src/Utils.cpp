@@ -39,3 +39,32 @@ std::vector<std::string> newToken(const std::string &str)
 	}
 	return res; // Vektörü döner
 }
+
+std::vector<std::string> splitCommand(const std::string &str, int _trim)
+{
+	std::vector<std::string> res;
+	std::string first, second;
+	std::istringstream stream(str);
+
+	if (stream >> first)
+	{
+		if (_trim)
+			first = trim(first); // Eğer trim parametresi 1 ise, ilk kelimeyi temizler
+		res.push_back(first); // İlk kelimeyi vektöre ekler
+	}
+	else
+		res.push_back(""); // Eğer ilk kelime yoksa boş string ekler
+
+	std::string::size_type pos = str.find(first); // İlk kelimenin bulunduğu konumu bulur
+	if (pos != std::string::npos) // Eğer ilk kelime bulunduysa
+	{
+		second = str.substr(pos + first.length()); // İlk kelimeden sonraki kısmı alır
+		if (_trim)
+			second = trim(second); // Eğer trim parametresi 1 ise, ikinci kelimeyi temizler
+		res.push_back(second); // İkinci kelimeyi vektöre ekler
+	}
+	else
+		res.push_back(""); // Eğer ikinci kelime yoksa boş string ekler
+
+	return res;
+}
