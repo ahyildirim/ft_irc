@@ -17,6 +17,7 @@
 # include "Channel.hpp"
 
 class Client;
+class Channel;
 
 class Server 
 {
@@ -40,10 +41,11 @@ class Server
 
 		Server(int port, const std::string &password);
 		void handleCommand(Client &client, const std::string &command);
+		void checkIfRegistered(Client &client);
 
 		//Commands
-		void handlePass(const std::string& channelName, Client& client);
-		void handleNick(const std::string& channelName, Client& client);
+		void handlePass(const std::string& password, Client& client);
+		void handleNick(const std::string& nickName, Client& client);
 		void handleUser(const std::string& channelName, Client& client);
 		void handleJoin(const std::string& channelName, Client& client);
 		void handlePrivmsg(const std::string& channelName, Client& client);

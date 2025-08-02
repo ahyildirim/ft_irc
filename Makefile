@@ -1,6 +1,7 @@
 SRCS += src/main.cpp \
 		src/Server.cpp \
 		src/Client.cpp \
+		src/Channel.cpp \
 		src/Utils.cpp \
 		src/commands/JOIN.cpp \
 		src/commands/KICK.cpp \

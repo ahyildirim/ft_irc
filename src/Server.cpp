@@ -1,5 +1,14 @@
 #include "../includes/Server.hpp"
 
+void Server::checkIfRegistered(Client &client)
+{
+	if (!client.isRegistered && client.passCheck && !client.nickName.empty() && !client.user.empty())
+	{
+		client.isRegistered = true; // Client kayıtlı ise, isRegistered'i true yapar.
+		writeReply(client.cliFd, client.nickName+ ": Welcome to the IRC Network\r\n");
+	}
+}
+
 const Server::Command Server::commandTable[] = {
 	{"PASS", &Server::handlePass},
 	{"NICK", &Server::handleNick},

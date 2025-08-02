@@ -68,3 +68,12 @@ std::vector<std::string> splitCommand(const std::string &str, int _trim)
 
 	return res;
 }
+
+void writeReply(int fd, const std::string& reply)
+{
+	if (fd < 0 || reply.empty())
+		return; // Eğer fd geçersizse veya cevap boşsa, hiçbir şey yapma
+
+	if(write(fd, reply.c_str(), reply.length()) < 0)
+		std::cerr << "Couldn't write reply to client: " << fd << std::endl;
+}
