@@ -1,6 +1,7 @@
 #include "../../includes/Server.hpp"
 
-void Server::handleQuit()
+void Server::handleQuit(const std::string& channelName, Client& client)
 {
-	std::cout << "Handling QUIT command." << std::endl;
+		(void)client; // Silinecek, warning i engellemek için kullanıldı.
+	std::cout << "Channel: " << channelName << std::endl;
 }

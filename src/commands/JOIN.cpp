@@ -1,6 +1,7 @@
 #include "../../includes/Server.hpp"
 
-void Server::handleJoin()
+void Server::handleJoin(const std::string& channelName, Client& client)
 {
-	std::cout << "Handling JOIN command." << std::endl;
+	(void)client; // Silinecek, warning i engellemek için kullanıldı.
+	std::cout << "Channel: " << channelName << std::endl;
 }

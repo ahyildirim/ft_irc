@@ -169,7 +169,7 @@ void Server::handleCommand(Client &client, const std::string &command)
 	{
 		if (commandTable[i].cmd == _command) // Eğer komut tablosunda komut bulunursa
 		{
-			(this->*commandTable[i].handler)(); // Komutun handler fonksiyonunu çağırır. (// arg, client argüman olarak verilecek)
+			(this->*commandTable[i].handler)(arg, client); // Komutun handler fonksiyonunu çağırır. (// arg, client argüman olarak verilecek)
 			return;
 		}
 	}

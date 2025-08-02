@@ -1,6 +1,7 @@
 #include "../../includes/Server.hpp"
 
-void Server::handleNick()
+void Server::handleNick(const std::string& channelName, Client& client)
 {
-	std::cout << "Handling NICK command." << std::endl;
+		(void)client; // Silinecek, warning i engellemek için kullanıldı.
+	std::cout << "Channel: " << channelName << std::endl;
 }

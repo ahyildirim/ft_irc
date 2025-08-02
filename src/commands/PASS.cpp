@@ -1,6 +1,7 @@
 #include "../../includes/Server.hpp"
 
-void Server::handlePass()
+void Server::handlePass(const std::string& channelName, Client& client)
 {
-	std::cout << "Handling PASS command." << std::endl;
+		(void)client; // Silinecek, warning i engellemek için kullanıldı.
+	std::cout << "Channel: " << channelName << std::endl;
 }

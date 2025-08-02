@@ -11,8 +11,10 @@
 # include <arpa/inet.h>
 # include <fcntl.h>
 # include <unistd.h>
+# include <map>
 # include "Client.hpp"
 # include "Utils.hpp"
+# include "Channel.hpp"
 
 class Client;
 
@@ -26,12 +28,12 @@ class Server
 		char _buffer[1024];
 		std::vector<Client> clients;
 		int _reuse;
-
+		std::map<std::string, Channel> _channels;
 
 	public:
 		struct Command{
 			std::string cmd;
-			void (Server::*handler)(); //içeriğe arg, client eklenecek
+			void (Server::*handler)(const std::string& args, Client& client); //içeriğe arg, client eklenecek
 		};
 
 		static const Command commandTable[];
@@ -40,14 +42,14 @@ class Server
 		void handleCommand(Client &client, const std::string &command);
 
 		//Commands
-		void handlePass();
-		void handleNick();
-		void handleUser();
-		void handleJoin();
-		void handlePrivmsg();
-		void handleQuit();
-		void handleTopic();
-		void handleKick();
+		void handlePass(const std::string& channelName, Client& client);
+		void handleNick(const std::string& channelName, Client& client);
+		void handleUser(const std::string& channelName, Client& client);
+		void handleJoin(const std::string& channelName, Client& client);
+		void handlePrivmsg(const std::string& channelName, Client& client);
+		void handleQuit(const std::string& channelName, Client& client);
+		void handleTopic(const std::string& channelName, Client& client);
+		void handleKick(const std::string& channelName, Client& client);
 };
 
 #endif
