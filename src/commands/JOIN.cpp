@@ -19,7 +19,10 @@ void Server::handleJoin(const std::string& channelName, Client& client)
 
 	std::map<std::string, Channel>::iterator it = _channels.find(channelName);
 	if (it == _channels.end())
+	{
 		it = this->_channels.insert(std::make_pair(channelName, Channel(channelName))).first; // Eğer kanal bulunamazsa, yeni kanal oluşturulur.
+		it->second.addOperator(&client); // Yeni kanala client operatör olarak eklenir.
+	}
 	Channel& channel = it->second; // Kanal referansı alınır.
 
 	if (channel.isClientInChannel(&client))

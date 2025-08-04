@@ -52,6 +52,7 @@ class Server
 		void handleQuit(const std::string& channelName, Client& client);
 		void handleTopic(const std::string& channelName, Client& client);
 		void handleKick(const std::string& channelName, Client& client);
+		void handleCap(const std::string& channelName, Client& client);
 };
 
 #endif

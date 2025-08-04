@@ -6,6 +6,7 @@ void Server::checkIfRegistered(Client &client)
 	{
 		client.isRegistered = true; // Client kayıtlı ise, isRegistered'i true yapar.
 		writeReply(client.cliFd, client.nickName+ ": Welcome to the IRC Network\r\n");
+		std::cout << GREEN << "Client " << client.nickName << " registered successfully." << RESET << std::endl;
 	}
 }
 
@@ -24,7 +25,8 @@ const Server::Command Server::commandTable[] = {
 	{"KICK", &Server::handleKick},
 	//{"MODE", &Server::handleMode},
 	//{"OPER", &Server::handleOper},
-	//{"AWAY", &Server::handleAway}
+	//{"AWAY", &Server::handleAway},
+	{"CAP", &Server::handleCap},
 };
 
 Server::Server(int port, const std::string &password) : _port(port), _password(password), _reuse(1)
@@ -124,13 +126,21 @@ Server::Server(int port, const std::string &password) : _port(port), _password(p
 				std::vector<std::string> commands = newToken(raw); // Komutları ayırır. Her komut bir satırda olabilir.
 				for (size_t c = 0; c < commands.size(); ++c)
 					Server::handleCommand(client, commands[c]); // Her komut için handleCommand fonksiyonu çağrılır.
-				
+
 				if (!client.passCheck)
 				{
 					std::cerr << "Client " << client.ipAddress << ":" << client.port << " is not authenticated (Wrong password)." << std::endl;
 					close(client.cliFd);
 					pollfds.erase(pollfds.begin() + i); // Client bağlantısı kapatılır ve pollfds vektöründen çıkarılır.
-					this->clients.erase(this->clients.begin() + i - 1); // Client da clients vektöründen silinir.
+					for (std::vector<Client>::iterator it = clients.begin(); it != clients.end(); ++it)
+					{
+						if (&(*it) == &client) // Eğer client bulunursa
+						{
+							clients.erase(it); // Client'ı clients vektöründen siler.
+							break;
+						}
+					}
+					std::cout << RED << "Client disconnected due to wrong password: " << GREEN << client.ipAddress << ":" << client.port << RESET << std::endl; // Client'ın bağlantısı kesildiğinde mesaj yazdırılır.
 					--i;
 					break;
 				}

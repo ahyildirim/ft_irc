@@ -51,6 +51,13 @@ void Channel::removeClient(Client* client)
     }
 }
 
+void Channel::addOperator(Client* client) 
+{
+    _operators.push_back(client); // Client'ı kanal operatörü olarak ekler.
+    client->isOperator = true; // Client'ın operatör olduğunu işaretler.
+    std::cout << GREEN << "Client " << client->nickName << " is now an operator in channel " << RED << _name << RESET << std::endl;
+}
+
 void Channel::broadcastMessage(const std::string& message, Client* sender) 
 {
     for (size_t i = 0; i < _clients.size(); ++i)

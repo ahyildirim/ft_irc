@@ -10,6 +10,7 @@ class Channel {
     private:
         std::string _name;
         std::vector<Client *> _clients;
+        std::vector<Client *> _operators;
         std::string _topic;
 
     public:
@@ -23,6 +24,7 @@ class Channel {
 
         void addClient(Client* client);
         void removeClient(Client* client);
+        void addOperator(Client* client);
         void broadcastMessage(const std::string& message, Client* sender);
         bool isClientInChannel(Client* client) const;
 
