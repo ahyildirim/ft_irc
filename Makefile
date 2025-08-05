@@ -15,7 +15,7 @@ SRCS += src/main.cpp \
 
 OBJS = $(SRCS:.cpp=.o)
 NAME = ircserv
-CXXFLAGS = -Wall -Wextra -Werror -std=c++98
+CXXFLAGS = -Wall -Wextra -Werror -std=c++98 -g
 CXX = c++
 RM = rm -f
 

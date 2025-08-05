@@ -59,14 +59,15 @@ Server::Server(int port, const std::string &password) : _port(port), _password(p
 		std::cout << GREEN << "Server is listening on port " << RED << this->_port << GREEN << "." << RESET << std::endl;
 
 	//Running the server
-	std::vector<pollfd> pollfds; // Polling için kullanılacak file descriptor'ları tutan bir vektör.
 	pollfd serverPollFd = {this->_server_socket_fd, POLLIN, 0}; // pollfd structını doldur. fd -> sunucunun dinlediği socketler, events -> POLLIN (sadece okunabilir olaylar için), revents -> 0 (başlangıçta boş).
-	pollfds.push_back(serverPollFd); // Vektörün içine pollfd (sunucu socketini) ekler.
+	this->pollfds.push_back(serverPollFd); // Vektörün içine pollfd (sunucu socketini) ekler.
 
-	while (true)
+	while (true && g_running) // Sonsuz döngü, g_running global değişkeni 0 olana kadar devam eder.
 	{
 		//Poll fonksiyonu, file descriptor'lar üzerinde olay(veri var mı, gönderilebilir mi) kontrol eder ve bekler.
 		int pollFdCount = poll(pollfds.data(), pollfds.size(), -1); // pollfds vektöründeki fd'yi alır, kaç tane fd olduğunu alır, -1 ile sonsuz süre bekler. Olay olan fd sayısını döner.
+		if (!g_running) // Eğer g_running 0 ise, döngüden çıkılır.
+			break;
 		if (pollFdCount < 0) // Eğer poll fonksiyonu başarısız olursa
 		{
 			std::cerr << "Error polling file descriptors." << std::endl;
@@ -99,12 +100,22 @@ Server::Server(int port, const std::string &password) : _port(port), _password(p
 		for (size_t i = 1; i < pollfds.size(); ++i)
 		{
 			Client &client = this->clients[i - 1]; // pollfds vektöründeki client'ı alır. İlk eleman sunucu socket olduğu için 1'den başlar.
+			if (client.toBeDisconnected)
+			{
+				close(client.cliFd); // Eğer client toBeDisconnected ise, bağlantıyı kapatır.
+				pollfds.erase(pollfds.begin() + i); // pollfds vektöründen client'ı siler.
+				this->clients.erase(this->clients.begin() + i - 1); // clients vektöründen client'ı siler.
+				--i; // Döngüdeki indeksi azaltır.
+				std::cout << RED << "Client disconnected: " << GREEN << client.ipAddress << ":" << client.port << RESET << std::endl; // Client'ın bağlantısı kesildiğinde mesaj yazdırılır.
+				continue;
+			}
 			if (pollfds[i].revents & POLLIN) // Eğer client socketinde okunabilir bir olay varsa
 			{
 				char buffer[1025];
 				int readed = recv(client.cliFd, buffer, sizeof(buffer) - 1, 0); // Client'tan veri(mesaj) alır.
 				if (readed <= 0)
 				{
+					this->handleQuit("Connection closed by client.", client); // Eğer veri okunamazsa, client bağlantısı kapatılır ve handleQuit fonksiyonu çağrılır.
 					close(client.cliFd);
 					pollfds.erase(pollfds.begin() + i); // Eğer veri okunamazsa, client bağlantısı kapatılır ve pollfds vektöründen çıkarılır.
 					this->clients.erase(this->clients.begin() + i - 1); // Client da clients vektöründen silinir.
@@ -129,7 +140,6 @@ Server::Server(int port, const std::string &password) : _port(port), _password(p
 
 				if (!client.passCheck)
 				{
-					std::cerr << "Client " << client.ipAddress << ":" << client.port << " is not authenticated (Wrong password)." << std::endl;
 					close(client.cliFd);
 					pollfds.erase(pollfds.begin() + i); // Client bağlantısı kapatılır ve pollfds vektöründen çıkarılır.
 					for (std::vector<Client>::iterator it = clients.begin(); it != clients.end(); ++it)
@@ -194,4 +204,14 @@ void Server::handleCommand(Client &client, const std::string &command)
 	}
 
 	std::cout << RED << "Unknown command: " << _command << RESET << std::endl; // Eğer komut bulunamazsa, bilinmeyen komut mesajı yazdırılır.
+}
+
+Server::~Server()
+{
+	for (size_t i = 0; i < clients.size(); ++i)
+	{
+		close(clients[i].cliFd); // Her client'ın socket'i kapatılır.
+	}
+	close(this->_server_socket_fd); // Sunucu socket'i kapatılır.
+	std::cout << GREEN << "Server closed." << RESET << std::endl;
 }

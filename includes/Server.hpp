@@ -12,12 +12,15 @@
 # include <fcntl.h>
 # include <unistd.h>
 # include <map>
+# include <csignal>
 # include "Client.hpp"
 # include "Utils.hpp"
 # include "Channel.hpp"
 
 class Client;
 class Channel;
+
+extern volatile sig_atomic_t g_running;
 
 class Server 
 {
@@ -32,6 +35,8 @@ class Server
 		std::map<std::string, Channel> _channels;
 
 	public:
+		std::vector<pollfd> pollfds;
+
 		struct Command{
 			std::string cmd;
 			void (Server::*handler)(const std::string& args, Client& client); //içeriğe arg, client eklenecek
@@ -40,17 +45,18 @@ class Server
 		static const Command commandTable[];
 
 		Server(int port, const std::string &password);
+		~Server();
 		void handleCommand(Client &client, const std::string &command);
 		void checkIfRegistered(Client &client);
 
 		//Commands
 		void handlePass(const std::string& password, Client& client);
 		void handleNick(const std::string& nickName, Client& client);
-		void handleUser(const std::string& channelName, Client& client);
+		void handleUser(const std::string& userName, Client& client);
 		void handleJoin(const std::string& channelName, Client& client);
-		void handlePrivmsg(const std::string& channelName, Client& client);
-		void handleQuit(const std::string& channelName, Client& client);
-		void handleTopic(const std::string& channelName, Client& client);
+		void handlePrivmsg(const std::string& arg, Client& client);
+		void handleQuit(const std::string& reason, Client& client);
+		void handleTopic(const std::string& arg, Client& client);
 		void handleKick(const std::string& channelName, Client& client);
 		void handleCap(const std::string& channelName, Client& client);
 };

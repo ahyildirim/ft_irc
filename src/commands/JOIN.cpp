@@ -30,10 +30,11 @@ void Server::handleJoin(const std::string& channelName, Client& client)
 		writeReply(client.cliFd, "You are already in the channel " + channelName + "\r\n");
 		return;
 	}
-	channel.addClient(&client); // Client kanala eklenir.
-	std::string joinMessage = ":" + client.nickName + "JOIN" + channelName + "\r\n"; // Join mesajı oluşturulur.
-	channel.broadcastMessage(joinMessage, &client); // Kanalda bulunan tüm clientlara mesaj gönderilir.
-	writeReply(client.cliFd, "You have joined the channel " + channelName + "\r\n"); // Client'a kanalın başarıyla eklendiği mesajı gönderilir.
+
+	channel.addClient(&client);
+	std::string joinMessage = ":" + client.nickName + " JOIN " + channelName + "\r\n";
+	channel.broadcastMessage(joinMessage, &client, *this);
+	writeReply(client.cliFd, "You have joined the channel " + channelName + "\r\n");
 
 	if (!channel.getTopic().empty())
 	{

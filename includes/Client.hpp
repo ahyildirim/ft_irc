@@ -3,6 +3,8 @@
 
 # include "Server.hpp"
 
+class Server;
+
 class Client
 {
 	public:
@@ -22,9 +24,12 @@ class Client
 		bool isOperator;
 		bool isRegistered;
 		bool passCheck;
+		bool toBeDisconnected;
 
 		Client();
 		~Client();
+
+		void setPollWrite(Server &server);
 
 };
 

@@ -1,6 +1,6 @@
 #include "../../includes/Server.hpp"
 
-void Server::handleUser(const std::string& channelName, Client& client)
+void Server::handleUser(const std::string& userName, Client& client)
 {
 	if (!client.passCheck)
 	{
@@ -8,12 +8,12 @@ void Server::handleUser(const std::string& channelName, Client& client)
 		return;
 	}
 
-	if (channelName.empty())
+	if (userName.empty())
 	{
 		writeReply(client.cliFd, "Username cannot be empty.\r\n");
 		return;
 	}
 
-	client.user = channelName; // Client'ın user'ı güncellenir.
+	client.user = userName; // Client'ın user'ı güncellenir.
 	checkIfRegistered(client); // Client'ın kayıtlı olup olmadığını kontrol eder.
 }

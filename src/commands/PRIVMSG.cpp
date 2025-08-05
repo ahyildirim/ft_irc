@@ -15,8 +15,8 @@ void Server::handlePrivmsg(const std::string& arg, Client& client)
         return;
     }
 
-    std::string target = tokens[0];
-    std::string message = tokens[1];
+    std::string target = trim(tokens[0]);
+    std::string message = trim(tokens[1]);
     if (message.empty())
     {
         writeReply(client.cliFd, "No text to send.\r\n");
@@ -41,7 +41,7 @@ void Server::handlePrivmsg(const std::string& arg, Client& client)
             return;
         }
         std::string msg = ":" + client.nickName + " PRIVMSG " + target + " :" + message + "\r\n";
-        channel.broadcastMessage(msg, &client);
+        channel.broadcastMessage(msg, &client, *this);
     }
     else
     {
