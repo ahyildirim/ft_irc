@@ -49,6 +49,17 @@ void Channel::removeClient(Client* client)
             break;
         }
     }
+
+    for (std::vector<Client*>::iterator it = this->_operators.begin(); it != this->_operators.end(); ++it)
+    {
+        if ((*it)->nickName == client->nickName)
+        {
+            this->_operators.erase(it);
+            std::cout << GREEN << "Client " << client->nickName << " removed from operators in channel " << RED << _name << RESET << std::endl;
+            break;
+        }
+    }
+
     if (this->_clients.empty()) // Eğer kanalda hiç client kalmadıysa, kanalı siler.
     {
         std::cout << RED << "Channel " << _name << " is now empty and will be removed." << RESET << std::endl;
@@ -71,10 +82,10 @@ void Channel::broadcastMessage(const std::string& message, Client* sender, Serve
 {
     for (size_t i = 0; i < _clients.size(); ++i)
     {
-        if (_clients[i] != sender) // Gönderen client hariç tüm clientlara mesaj gönderilir.
+        if (_clients[i] != sender || !sender) // Gönderen client hariç tüm clientlara mesaj gönderilir.
         {
             _clients[i]->messageBox.push_back(message);
-            _clients[i]->setPollWrite(server);
+            _clients[i]->setPollWrite(server); // Yazma olayını ayarlar. (Issue #1 çözümü)
         }
     }
 }

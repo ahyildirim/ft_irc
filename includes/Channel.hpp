@@ -28,7 +28,7 @@ class Channel {
         void addOperator(Client* client);
         void broadcastMessage(const std::string& message, Client* sender, Server &server);
         bool isClientInChannel(Client* client) const;
-        
+
         bool toBeRemoved;
 
 };

@@ -46,6 +46,7 @@ class Server
 
 		Server(int port, const std::string &password);
 		~Server();
+
 		void handleCommand(Client &client, const std::string &command);
 		void checkIfRegistered(Client &client);
 

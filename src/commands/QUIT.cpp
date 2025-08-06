@@ -10,12 +10,11 @@ void Server::handleQuit(const std::string& reason, Client& client)
 		Channel& channel = it->second;
 		if (channel.isClientInChannel(&client))
 		{
-			std::cout << "GELDİ" << std::endl;
-			channel.broadcastMessage(quitMessage, &client, *this);
 			channel.removeClient(&client);
+			channel.broadcastMessage(quitMessage, &client, *this);
 		}
 	}
-	
+
 	for (std::map<std::string, Channel>::iterator it = _channels.begin(); it != _channels.end(); ++it)
 	{
 		Channel& channel = it->second;

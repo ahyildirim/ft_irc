@@ -106,7 +106,7 @@ Server::Server(int port, const std::string &password) : _port(port), _password(p
 				pollfds.erase(pollfds.begin() + i); // pollfds vektöründen client'ı siler.
 				this->clients.erase(this->clients.begin() + i - 1); // clients vektöründen client'ı siler.
 				--i; // Döngüdeki indeksi azaltır.
-				std::cout << RED << "Client disconnected: " << GREEN << client.ipAddress << ":" << client.port << RESET << std::endl; // Client'ın bağlantısı kesildiğinde mesaj yazdırılır.
+				std::cout << RED << "Client disconnected(toBeDisconnected): " << GREEN << client.ipAddress << ":" << client.port << RESET << std::endl; // Client'ın bağlantısı kesildiğinde mesaj yazdırılır.
 				continue;
 			}
 			if (pollfds[i].revents & POLLIN) // Eğer client socketinde okunabilir bir olay varsa
@@ -120,7 +120,7 @@ Server::Server(int port, const std::string &password) : _port(port), _password(p
 					pollfds.erase(pollfds.begin() + i); // Eğer veri okunamazsa, client bağlantısı kapatılır ve pollfds vektöründen çıkarılır.
 					this->clients.erase(this->clients.begin() + i - 1); // Client da clients vektöründen silinir.
 					--i;
-					std::cout << RED << "Client disconnected: " << GREEN << client.ipAddress << ":" << client.port << RESET << std::endl; // Client'ın bağlantısı kesildiğinde mesaj yazdırılır.
+					std::cout << RED << "Client disconnected(recv): " << GREEN << client.ipAddress << ":" << client.port << RESET << std::endl; // Client'ın bağlantısı kesildiğinde mesaj yazdırılır.
 					continue;
 				}
 				buffer[readed] = '\0'; // Okunan verinin sonuna null karakter eklenir.
