@@ -24,7 +24,7 @@ const Server::Command Server::commandTable[] = {
 	{"TOPIC", &Server::handleTopic},
 	{"KICK", &Server::handleKick},
 	//{"MODE", &Server::handleMode},
-	//{"OPER", &Server::handleOper},
+	{"OPER", &Server::handleOper},
 	//{"AWAY", &Server::handleAway},
 	{"CAP", &Server::handleCap},
 };

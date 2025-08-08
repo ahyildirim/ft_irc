@@ -60,6 +60,11 @@ class Server
 		void handleTopic(const std::string& arg, Client& client);
 		void handleKick(const std::string& channelName, Client& client);
 		void handleCap(const std::string& channelName, Client& client);
+		void handleOper(const std::string& arg, Client& client);
+
+
+		
+		Client* findClientByNick(const std::string &nick);
 };
 
 #endif

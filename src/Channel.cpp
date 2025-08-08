@@ -38,7 +38,7 @@ void Channel::addClient(Client* client)
     }
 }
 
-void Channel::removeClient(Client* client)
+/* void Channel::removeClient(Client* client)
 {
     for (std::vector<Client*>::iterator it = this->_clients.begin(); it != this->_clients.end(); ++it)
     {
@@ -68,6 +68,67 @@ void Channel::removeClient(Client* client)
         this->_clients.clear(); // Client listesini temizler.
         this->_operators.clear(); // Operatör listesini temizler.
         this->toBeRemoved = true; // Kanalın silinmesi gerektiğini işaretler.
+    }
+} */
+
+void Channel::removeClient(Client* client)
+{
+    bool wasOperator = client->isOperator; // Çıkan kişi operatör mü?
+
+    // Client listesinden çıkar
+    for (std::vector<Client*>::iterator it = _clients.begin(); it != _clients.end(); ++it)
+    {
+        if ((*it)->nickName == client->nickName)
+        {
+            _clients.erase(it);
+            std::cout << GREEN << "Client " << client->nickName << " left channel " 
+                      << RED << _name << RESET << std::endl;
+            break;
+        }
+    }
+
+    // Operatör listesinden çıkar
+    for (std::vector<Client*>::iterator it = _operators.begin(); it != _operators.end(); ++it)
+    {
+        if ((*it)->nickName == client->nickName)
+        {
+            _operators.erase(it);
+            std::cout << GREEN << "Client " << client->nickName 
+                      << " removed from operators in channel " << RED << _name << RESET << std::endl;
+            break;
+        }
+    }
+
+    // Eğer çıkan operatörse ve kanalda başka operatör yoksa, yeni birini ata
+    if (wasOperator)
+    {
+        bool operatorExists = false;
+        for (size_t i = 0; i < _clients.size(); ++i)
+        {
+            if (_clients[i]->isOperator)
+            {
+                operatorExists = true;
+                break;
+            }
+        }
+        if (!operatorExists && !_clients.empty())
+        {
+            _clients.front()->isOperator = true;
+            _operators.push_back(_clients.front());
+            std::cout << GREEN << "Client " << _clients.front()->nickName
+                      << " is now the operator of channel " << RED << _name << RESET << std::endl;
+        }
+    }
+
+    // Kanal boş kaldıysa silinmeye işaretle
+    if (_clients.empty())
+    {
+        std::cout << RED << "Channel " << _name << " is now empty and will be removed." << RESET << std::endl;
+        _name.clear();
+        _topic.clear();
+        _clients.clear();
+        _operators.clear();
+        toBeRemoved = true;
     }
 }
 

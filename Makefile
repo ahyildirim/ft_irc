@@ -6,6 +6,7 @@ SRCS += src/main.cpp \
 		src/commands/JOIN.cpp \
 		src/commands/KICK.cpp \
 		src/commands/NICK.cpp \
+		src/commands/OPER.cpp \
 		src/commands/PASS.cpp \
 		src/commands/PRIVMSG.cpp \
 		src/commands/QUIT.cpp \
