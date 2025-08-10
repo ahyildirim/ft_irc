@@ -63,6 +63,7 @@ class Server
 		void handleKick(const std::string& channelName, Client& client);
 		void handleCap(const std::string& channelName, Client& client);
 		void handleOper(const std::string& arg, Client& client);
+		void handleInvite(const std::string& arg, Client& client);
 
 
 		

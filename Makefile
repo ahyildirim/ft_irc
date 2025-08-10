@@ -13,6 +13,7 @@ SRCS += src/main.cpp \
 		src/commands/TOPIC.cpp \
 		src/commands/USER.cpp \
 		src/commands/CAP.cpp \
+		src/commands/INVITE.cpp \
 
 OBJS = $(SRCS:.cpp=.o)
 NAME = ircserv

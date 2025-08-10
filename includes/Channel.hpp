@@ -12,6 +12,7 @@ class Channel {
         std::string _name;
         std::vector<Client *> _clients;
         std::vector<Client *> _operators;
+        std::vector<Client *> _invitedUsers;
         std::string _topic;
         
         public:
@@ -22,7 +23,8 @@ class Channel {
         const std::string& getTopic() const;
         
         void setTopic(const std::string& topic);
-        
+        void addInvitedUser(Client* client);
+
         void addClient(Client* client);
         void removeClient(Client* client);
         void addOperator(Client* client);

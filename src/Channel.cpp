@@ -107,6 +107,19 @@ void Channel::addOperator(Client* client)
     std::cout << GREEN << "Client " << client->nickName << " is now an operator in channel " << RED << _name << RESET << std::endl;
 }
 
+void Channel::addInvitedUser(Client* client) 
+{
+    // Zaten davet edilmiş mi kontrol et
+    for (size_t i = 0; i < _invitedUsers.size(); ++i)
+    {
+        if (_invitedUsers[i] == client) // Pointer karşılaştırması
+            return; // Zaten listede, tekrar ekleme
+    }
+
+    // Yoksa ekle
+    _invitedUsers.push_back(client);
+}
+
 void Channel::broadcastMessage(const std::string& message, Client* sender, Server &server) 
 {
     for (size_t i = 0; i < _clients.size(); ++i)

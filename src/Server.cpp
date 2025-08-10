@@ -45,6 +45,7 @@ const Server::Command Server::commandTable[] = {
 	{"OPER", &Server::handleOper},
 	//{"AWAY", &Server::handleAway},
 	{"CAP", &Server::handleCap},
+	{"INVITE", &Server::handleInvite},
 };
 
 Server::Server(int port, const std::string &password) : _port(port), _password(password), _reuse(1)

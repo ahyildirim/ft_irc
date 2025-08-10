@@ -62,6 +62,6 @@ void Server::handleTopic(const std::string& arg, Client& client)
 		writeReply(client.cliFd, "Topic for channel " + channelName + " set to: " + newTopic + "\r\n");
 		// Broadcast the new topic to all clients in the channel
 		std::string topicMsg = ":" + client.nickName + " TOPIC " + channelName + " :" + newTopic + "\r\n";
-		channel->broadcastMessage(topicMsg, NULL, *this); // NULL → herkese
+		//channel->broadcastMessage(topicMsg, NULL, *this); // NULL → herkese
 	}
 }
