@@ -27,7 +27,7 @@ void Server::handlePrivmsg(const std::string& arg, Client& client)
 
     // Channel mesajı mı, kullanıcı mesajı mı?
     if (!target.empty() && target[0] == '#')
-    {
+    {   
         std::map<std::string, Channel>::iterator it = _channels.find(target);
         if (it == _channels.end())
         {

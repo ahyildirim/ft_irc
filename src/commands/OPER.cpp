@@ -44,14 +44,3 @@ void Server::handleOper(const std::string &args, Client &client)
     std::cout << GREEN << "Client " << targetNick << " is now an IRC operator." << RESET << std::endl;
 }
 
-// Kullanıcıyı nick'e göre bulma
-Client* Server::findClientByNick(const std::string &nick)
-{
-    for (size_t i = 0; i < clients.size(); ++i)
-    {
-        if (clients[i].nickName == nick)
-            return &clients[i];
-    }
-    return NULL;
-}
-

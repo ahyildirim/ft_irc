@@ -28,15 +28,14 @@ void Server::handleTopic(const std::string& arg, Client& client)
 		return;
 	}
 
-	std::map<std::string, Channel>::iterator it = _channels.find(channelName);
-	if (it == _channels.end())
+	Channel *channel = findChannel(channelName); //olası hata?
+	if (!channel)
 	{
 		writeReply(client.cliFd, "Channel " + channelName + " does not exist.\r\n");
 		return;
 	}
 
-	Channel& channel = it->second;
-	if (!channel.isClientInChannel(&client))
+	if (!channel->isClientInChannel(&client))
 	{
 		writeReply(client.cliFd, "You are not in channel " + channelName + ".\r\n");
 		return;
@@ -45,10 +44,10 @@ void Server::handleTopic(const std::string& arg, Client& client)
 	if (newTopic.empty())
 	{
 		// If no new topic is provided, return the current topic
-		if (channel.getTopic().empty())
+		if (channel->getTopic().empty())
 			writeReply(client.cliFd, "331 " + client.nickName + " " + channelName + " :No topic is set\r\n");
 		else
-			writeReply(client.cliFd, "332 " + client.nickName + " " + channelName + " :" + channel.getTopic() + "\r\n");
+			writeReply(client.cliFd, "332 " + client.nickName + " " + channelName + " :" + channel->getTopic() + "\r\n");
 	}
 	else
 	{
@@ -59,10 +58,10 @@ void Server::handleTopic(const std::string& arg, Client& client)
 		}
 		if (newTopic[0] == ':')
 			newTopic = newTopic.substr(1); // Remove the leading ':' if present
-		channel.setTopic(newTopic); // Set the new topic for the channel
+		channel->setTopic(newTopic); // Set the new topic for the channel
 		writeReply(client.cliFd, "Topic for channel " + channelName + " set to: " + newTopic + "\r\n");
 		// Broadcast the new topic to all clients in the channel
 		std::string topicMsg = ":" + client.nickName + " TOPIC " + channelName + " :" + newTopic + "\r\n";
-		channel.broadcastMessage(topicMsg, NULL, *this); // NULL → herkese
+		channel->broadcastMessage(topicMsg, NULL, *this); // NULL → herkese
 	}
 }

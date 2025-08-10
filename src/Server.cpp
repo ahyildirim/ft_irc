@@ -1,5 +1,23 @@
 #include "../includes/Server.hpp"
 
+Client* Server::findClientByNick(const std::string &nick)
+{
+    for (size_t i = 0; i < clients.size(); ++i)
+    {
+        if (clients[i].nickName == nick)
+            return &clients[i];
+    }
+    return NULL;
+}
+
+Channel* Server::findChannel(const std::string& channelName)
+{
+	std::map<std::string, Channel>::iterator it = _channels.find(channelName);
+	if (it != _channels.end())
+		return &it->second;
+	return NULL;
+}
+
 void Server::checkIfRegistered(Client &client)
 {
 	if (!client.isRegistered && client.passCheck && !client.nickName.empty() && !client.user.empty())
@@ -179,7 +197,17 @@ Server::Server(int port, const std::string &password) : _port(port), _password(p
 			if (!client.messageBox.empty())
 				pollfds[i].events |= POLLOUT; // Eğer client'ın messageBox'ı boş değilse, POLLOUT olayını ekler.
 		}
-		
+
+		for (std::map<std::string, Channel>::iterator it = _channels.begin(); it != _channels.end(); ++it)
+		{
+			Channel& channel = it->second;
+			if (channel.toBeRemoved) // Eğer kanal silinmesi gerekiyorsa
+			{
+				_channels.erase(it); // Kanalı haritadan siler.
+				std::cout << RED << "Channel " << channel.getName() << " has been removed." << RESET << std::endl;
+				break; // Kanal silindiği için döngüden çıkılır.
+			}
+		}
 	}
 }
 

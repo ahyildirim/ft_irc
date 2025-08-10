@@ -38,39 +38,6 @@ void Channel::addClient(Client* client)
     }
 }
 
-/* void Channel::removeClient(Client* client)
-{
-    for (std::vector<Client*>::iterator it = this->_clients.begin(); it != this->_clients.end(); ++it)
-    {
-        if ((*it)->nickName == client->nickName)
-        {
-            this->_clients.erase(it);
-            std::cout << GREEN << "Client " << client->nickName << " left channel " << RED << _name << RESET << std::endl;
-            break;
-        }
-    }
-
-    for (std::vector<Client*>::iterator it = this->_operators.begin(); it != this->_operators.end(); ++it)
-    {
-        if ((*it)->nickName == client->nickName)
-        {
-            this->_operators.erase(it);
-            std::cout << GREEN << "Client " << client->nickName << " removed from operators in channel " << RED << _name << RESET << std::endl;
-            break;
-        }
-    }
-
-    if (this->_clients.empty()) // Eğer kanalda hiç client kalmadıysa, kanalı siler.
-    {
-        std::cout << RED << "Channel " << _name << " is now empty and will be removed." << RESET << std::endl;
-        this->_name.clear(); // Kanal adını temizler.
-        this->_topic.clear(); // Kanal konusunu temizler.
-        this->_clients.clear(); // Client listesini temizler.
-        this->_operators.clear(); // Operatör listesini temizler.
-        this->toBeRemoved = true; // Kanalın silinmesi gerektiğini işaretler.
-    }
-} */
-
 void Channel::removeClient(Client* client)
 {
     bool wasOperator = client->isOperator; // Çıkan kişi operatör mü?
@@ -81,26 +48,26 @@ void Channel::removeClient(Client* client)
         if ((*it)->nickName == client->nickName)
         {
             _clients.erase(it);
-            std::cout << GREEN << "Client " << client->nickName << " left channel " 
-                      << RED << _name << RESET << std::endl;
+            // Client'ın kanal operatörlük yetkisini sıfırla
+            client->isOperator = false; // <-- Bu satırı ekleyin
+            std::cout << GREEN << "Client " << client->nickName << " left channel " << RED << _name << RESET << std::endl;
             break;
         }
     }
 
-    // Operatör listesinden çıkar
+    // Operatör listesinden çıkar (eğer listedeyse)
     for (std::vector<Client*>::iterator it = _operators.begin(); it != _operators.end(); ++it)
     {
         if ((*it)->nickName == client->nickName)
         {
             _operators.erase(it);
-            std::cout << GREEN << "Client " << client->nickName 
-                      << " removed from operators in channel " << RED << _name << RESET << std::endl;
+            std::cout << GREEN << "Client " << client->nickName << " removed from operators in channel " << RED << _name << RESET << std::endl;
             break;
         }
     }
 
-    // Eğer çıkan operatörse ve kanalda başka operatör yoksa, yeni birini ata
-    if (wasOperator)
+    // Eğer çıkan operatörse ve kanalda hala client varsa, yeni bir operatör ata
+    if (wasOperator && !_clients.empty()) // <-- !_clients.empty() kontrolünü ekleyin
     {
         bool operatorExists = false;
         for (size_t i = 0; i < _clients.size(); ++i)
@@ -111,14 +78,15 @@ void Channel::removeClient(Client* client)
                 break;
             }
         }
-        if (!operatorExists && !_clients.empty())
+        // Kanala yeni bir operatör atanmamışsa, ilk client'ı operatör yap
+        if (!operatorExists) // <-- !operatorExists kontrolünü ekleyin
         {
             _clients.front()->isOperator = true;
             _operators.push_back(_clients.front());
-            std::cout << GREEN << "Client " << _clients.front()->nickName
-                      << " is now the operator of channel " << RED << _name << RESET << std::endl;
+            std::cout << GREEN << "Client " << _clients.front()->nickName << " is now the operator of channel " << RED << _name << RESET << std::endl;
         }
     }
+
 
     // Kanal boş kaldıysa silinmeye işaretle
     if (_clients.empty())
@@ -143,7 +111,7 @@ void Channel::broadcastMessage(const std::string& message, Client* sender, Serve
 {
     for (size_t i = 0; i < _clients.size(); ++i)
     {
-        if (_clients[i] != sender || !sender) // Gönderen client hariç tüm clientlara mesaj gönderilir.
+        if ((!sender || _clients[i] != sender) && !_clients[i]->toBeDisconnected) // Gönderen client hariç tüm clientlara mesaj gönderilir.
         {
             _clients[i]->messageBox.push_back(message);
             _clients[i]->setPollWrite(server); // Yazma olayını ayarlar. (Issue #1 çözümü)

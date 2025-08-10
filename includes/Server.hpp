@@ -50,6 +50,8 @@ class Server
 		void handleCommand(Client &client, const std::string &command);
 		void checkIfRegistered(Client &client);
 
+		Channel* findChannel(const std::string& channelName);
+
 		//Commands
 		void handlePass(const std::string& password, Client& client);
 		void handleNick(const std::string& nickName, Client& client);
