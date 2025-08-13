@@ -1,6 +1,6 @@
 #include "../../includes/Server.hpp"
 
-void Server::handleTopic(const std::string& arg, Client& client)
+void Server::handleTopic(const std::string& arg, Client& client) //[TODO] Make this function compatible with MODE +t
 {
 	if (!client.isRegistered)
 	{
