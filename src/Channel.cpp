@@ -1,9 +1,11 @@
 #include "../includes/Channel.hpp"
 
-Channel::Channel(const std::string& name) : _name(name), _topic(""), toBeRemoved(0) {}
+//Constructor-Destructor
+Channel::Channel(const std::string& name) : _name(name), _topic(""), _toBeRemoved(0), _inviteOnly(false), _topicRestricted(false), _userLimit(0) {}
 
 Channel::~Channel() {}
 
+#pragma region Getter
 const std::string& Channel::getName() const 
 {
     return this->_name;
@@ -14,11 +16,80 @@ const std::string& Channel::getTopic() const
     return this->_topic;
 }
 
+const std::string& Channel::getKey() const
+{
+    return this->_key;
+}
+
+bool Channel::isToBeRemoved() const
+{
+    return this->_toBeRemoved;
+}
+
+bool Channel::isInviteOnly() const
+{
+    return this->_inviteOnly;
+}
+
+bool Channel::isTopicRestricted() const
+{
+    return this->_topicRestricted;
+}
+
+size_t Channel::getUserLimit() const
+{
+    return this->_userLimit;
+}
+
+std::vector<Client*>& Channel::getInvitedUsers()
+{
+    return this->_invitedUsers;
+}
+
+std::vector<Client*>& Channel::getClients()
+{
+    return this->_clients;
+}
+
+bool Channel::hasKey() const
+{
+    return !this->_key.empty();
+}
+
+bool Channel::hasUserLimit() const
+{
+    return this->_userLimit > 0;
+}
+#pragma endregion Getter
+
+#pragma region Setter
 void Channel::setTopic(const std::string& topic) 
 {
     this->_topic = topic;
 }
 
+void Channel::setInviteOnly(bool state)
+{
+    this->_inviteOnly = state;
+}
+
+void Channel::setTopicRestricted(bool state)
+{
+    this->_topicRestricted = state;
+}
+
+void Channel::setKey(const std::string& key)
+{
+    this->_key = key;
+}
+
+void Channel::setUserLimit(size_t limit)
+{
+    this->_userLimit = limit;
+}
+#pragma endregion Setter
+
+//Client Management
 bool Channel::isClientInChannel(Client* client) const 
 {
     for (size_t i = 0; i < _clients.size(); ++i)
@@ -48,8 +119,7 @@ void Channel::removeClient(Client* client)
         if ((*it)->nickName == client->nickName)
         {
             _clients.erase(it);
-            // Client'ın kanal operatörlük yetkisini sıfırla
-            client->isOperator = false; // <-- Bu satırı ekleyin
+            client->isOperator = false;
             std::cout << GREEN << "Client " << client->nickName << " left channel " << RED << _name << RESET << std::endl;
             break;
         }
@@ -62,6 +132,16 @@ void Channel::removeClient(Client* client)
         {
             _operators.erase(it);
             std::cout << GREEN << "Client " << client->nickName << " removed from operators in channel " << RED << _name << RESET << std::endl;
+            break;
+        }
+    }
+
+    for (std::vector<Client*>::iterator it = _invitedUsers.begin(); it != _invitedUsers.end(); ++it)
+    {
+        if ((*it)->nickName == client->nickName)
+        {
+            _invitedUsers.erase(it);
+            std::cout << GREEN << "Client " << client->nickName << " removed from invited users in channel " << RED << _name << RESET << std::endl;
             break;
         }
     }
@@ -96,7 +176,8 @@ void Channel::removeClient(Client* client)
         _topic.clear();
         _clients.clear();
         _operators.clear();
-        toBeRemoved = true;
+        _invitedUsers.clear();
+        _toBeRemoved = true;
     }
 }
 
@@ -105,6 +186,20 @@ void Channel::addOperator(Client* client)
     _operators.push_back(client); // Client'ı kanal operatörü olarak ekler.
     client->isOperator = true; // Client'ın operatör olduğunu işaretler.
     std::cout << GREEN << "Client " << client->nickName << " is now an operator in channel " << RED << _name << RESET << std::endl;
+}
+
+void Channel::removeOperator(Client* client) 
+{
+    for (std::vector<Client*>::iterator it = this->_operators.begin(); it != this->_operators.end(); ++it)
+    {
+        if ((*it)->nickName == client->nickName)
+        {
+            this->_operators.erase(it);
+            client->isOperator = false; // Client'ın operatörlük yetkisini sıfırlar.
+            std::cout << GREEN << "Client " << client->nickName << " removed from operators in channel " << RED << _name << RESET << std::endl;
+            break;
+        }
+    }
 }
 
 void Channel::addInvitedUser(Client* client) 

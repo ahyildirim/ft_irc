@@ -33,19 +33,13 @@ const Server::Command Server::commandTable[] = {
 	{"NICK", &Server::handleNick},
 	{"USER", &Server::handleUser},
 	{"JOIN", &Server::handleJoin},
-	//{"PART", &Server::handlePart},
 	{"PRIVMSG", &Server::handlePrivmsg},
 	{"QUIT", &Server::handleQuit},
-	//{"PONG", &Server::handlePong},
-	//{"PING", &Server::handlePing},
-	//{"LIST", &Server::handleList},
 	{"TOPIC", &Server::handleTopic},
 	{"KICK", &Server::handleKick},
-	//{"MODE", &Server::handleMode},
-	{"OPER", &Server::handleOper},
-	//{"AWAY", &Server::handleAway},
 	{"CAP", &Server::handleCap},
 	{"INVITE", &Server::handleInvite},
+	{"MODE", &Server::handleMode},
 };
 
 Server::Server(int port, const std::string &password) : _port(port), _password(password), _reuse(1)
@@ -202,7 +196,7 @@ Server::Server(int port, const std::string &password) : _port(port), _password(p
 		for (std::map<std::string, Channel>::iterator it = _channels.begin(); it != _channels.end(); ++it)
 		{
 			Channel& channel = it->second;
-			if (channel.toBeRemoved) // Eğer kanal silinmesi gerekiyorsa
+			if (channel.isToBeRemoved()) // Eğer kanal silinmesi gerekiyorsa
 			{
 				_channels.erase(it); // Kanalı haritadan siler.
 				std::cout << RED << "Channel " << channel.getName() << " has been removed." << RESET << std::endl;

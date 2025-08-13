@@ -69,6 +69,16 @@ std::vector<std::string> splitCommand(const std::string &str, int _trim)
 	return res;
 }
 
+std::vector<std::string> splitBySpace(const std::string& str)
+{
+	std::vector<std::string> tokens;
+	std::istringstream iss(str);
+	std::string token;
+	while (iss >> token) // Boşluktan bir sonraki kelimeye atlar
+		tokens.push_back(token); // Her kelimeyi vektöre ekler
+	return tokens;
+}
+
 void writeReply(int fd, const std::string& reply)
 {
 	if (fd < 0 || reply.empty())
@@ -76,4 +86,16 @@ void writeReply(int fd, const std::string& reply)
 
 	if(write(fd, reply.c_str(), reply.length()) < 0)
 		std::cerr << "Couldn't write reply to client: " << fd << std::endl;
+}
+
+std::string to_string_c98(int value) 
+{
+    std::ostringstream oss;
+    oss << value;
+    return oss.str();
+}
+
+int stoi_c98(const std::string &str) 
+{
+    return std::atoi(str.c_str());
 }

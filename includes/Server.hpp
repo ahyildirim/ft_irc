@@ -56,14 +56,14 @@ class Server
 		void handlePass(const std::string& password, Client& client);
 		void handleNick(const std::string& nickName, Client& client);
 		void handleUser(const std::string& userName, Client& client);
-		void handleJoin(const std::string& channelName, Client& client);
+		void handleJoin(const std::string& arg, Client& client);
 		void handlePrivmsg(const std::string& arg, Client& client);
 		void handleQuit(const std::string& reason, Client& client);
 		void handleTopic(const std::string& arg, Client& client);
 		void handleKick(const std::string& channelName, Client& client);
 		void handleCap(const std::string& channelName, Client& client);
-		void handleOper(const std::string& arg, Client& client);
 		void handleInvite(const std::string& arg, Client& client);
+		void handleMode(const std::string& arg, Client& client);
 
 
 		
