@@ -1,11 +1,11 @@
 #include "../includes/Channel.hpp"
 
 //Constructor-Destructor
-Channel::Channel(const std::string& name) : _name(name), _topic(""), _toBeRemoved(0), _inviteOnly(false), _topicRestricted(false), _userLimit(0) {}
+Channel::Channel(const std::string& name) : _name(name), _topic(""), _toBeRemoved(0), _inviteOnly(0), _topicRestricted(1), _userLimit(0) {}
 
 Channel::~Channel() {}
 
-#pragma region Getter
+
 const std::string& Channel::getName() const 
 {
     return this->_name;
@@ -60,9 +60,9 @@ bool Channel::hasUserLimit() const
 {
     return this->_userLimit > 0;
 }
-#pragma endregion Getter
 
-#pragma region Setter
+
+
 void Channel::setTopic(const std::string& topic) 
 {
     this->_topic = topic;
@@ -87,7 +87,7 @@ void Channel::setUserLimit(size_t limit)
 {
     this->_userLimit = limit;
 }
-#pragma endregion Setter
+
 
 //Client Management
 bool Channel::isClientInChannel(Client* client) const 
@@ -215,7 +215,7 @@ void Channel::addInvitedUser(Client* client)
     _invitedUsers.push_back(client);
 }
 
-void Channel::broadcastMessage(const std::string& message, Client* sender, Server &server) 
+void Channel::broadcastMessage(const std::string& message, Client* sender, Server &server) //ne oe bi fonksiyon bu ya
 {
     for (size_t i = 0; i < _clients.size(); ++i)
     {

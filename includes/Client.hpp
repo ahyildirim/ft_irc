@@ -25,6 +25,7 @@ class Client
 		bool isRegistered;
 		bool passCheck;
 		bool toBeDisconnected;
+		bool isCap;
 
 		Client();
 		~Client();

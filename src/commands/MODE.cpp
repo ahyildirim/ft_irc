@@ -69,11 +69,9 @@ void Server::handleMode(const std::string &arg, Client& client)
         {
             case 'i':
                 channel->setInviteOnly(adding);
-                writeReply(client.cliFd, "MODE " + channel->getName() + " " + (adding ? "+" : "-") + "i\r\n");
                 break;
             case 't':
                 channel->setTopicRestricted(adding);
-                writeReply(client.cliFd, "MODE " + channel->getName() + " " + (adding ? "+" : "-") + "t\r\n");
                 break;
             case 'k':
                 if (paramIndex >= modeParams.size() && adding)
@@ -83,13 +81,11 @@ void Server::handleMode(const std::string &arg, Client& client)
                 }
                 if (adding)
                 {
-                    channel->setKey(modeParams[paramIndex++]); //? 
-                    writeReply(client.cliFd, "MODE " + channel->getName() + " +k " + channel->getKey() + "\r\n");
+                    channel->setKey(modeParams[paramIndex++]);
                 }
                 else
                 {
-                    channel->setKey(""); // Remove key
-                    writeReply(client.cliFd, "MODE " + channel->getName() + " -k\r\n");
+                    channel->setKey("");
                 }
                 break;
             case 'o':
@@ -111,15 +107,9 @@ void Server::handleMode(const std::string &arg, Client& client)
                     }
 
                     if (adding)
-                    {
                         channel->addOperator(targetClient);
-                        writeReply(client.cliFd, "MODE " + channel->getName() + " +o " + targetNick + "\r\n");
-                    }
                     else
-                    {
                         channel->removeOperator(targetClient);
-                        writeReply(client.cliFd, "MODE " + channel->getName() + " -o " + targetNick + "\r\n");
-                    }
                 }
                 break;
             case 'l':
@@ -134,7 +124,6 @@ void Server::handleMode(const std::string &arg, Client& client)
                     {
                         size_t limit = stoi_c98(modeParams[paramIndex++]);
                         channel->setUserLimit(limit);
-                        writeReply(client.cliFd, "MODE " + channel->getName() + " +l " + to_string_c98(limit) + "\r\n");
                     }
                     catch (const std::invalid_argument& ia)
                     {
@@ -148,13 +137,10 @@ void Server::handleMode(const std::string &arg, Client& client)
                     }
                 }
                 else
-                {
                     channel->setUserLimit(0);
-                    writeReply(client.cliFd, "MODE " + channel->getName() + " -l\r\n");
-                }
                 break;
             default:
-                writeReply(client.cliFd, "472 " + client.nickName + " " + modeChar + " :is unknown mode char to me\r\n");
+                writeReply(client.cliFd, "472 " + client.nickName + " " + modeChar + " :is unknown mode char\r\n");
                 break;
         }
     }

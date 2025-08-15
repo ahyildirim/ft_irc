@@ -1,6 +1,6 @@
 #include "../../includes/Server.hpp"
 
-void Server::handleTopic(const std::string& arg, Client& client) //[TODO] Make this function compatible with MODE +t
+void Server::handleTopic(const std::string& arg, Client& client)
 {
 	if (!client.isRegistered)
 	{
@@ -51,7 +51,7 @@ void Server::handleTopic(const std::string& arg, Client& client) //[TODO] Make t
 	}
 	else
 	{
-		if (!client.isOperator)
+		if (!client.isOperator && channel->isTopicRestricted())
 		{
 			writeReply(client.cliFd, "You must be an operator to set the topic.\r\n");
 			return;

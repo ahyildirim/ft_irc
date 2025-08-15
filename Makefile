@@ -14,6 +14,7 @@ SRCS += src/main.cpp \
 		src/commands/CAP.cpp \
 		src/commands/INVITE.cpp \
 		src/commands/MODE.cpp \
+		src/commands/PING.cpp \
 
 OBJS = $(SRCS:.cpp=.o)
 NAME = ircserv

@@ -40,6 +40,7 @@ const Server::Command Server::commandTable[] = {
 	{"CAP", &Server::handleCap},
 	{"INVITE", &Server::handleInvite},
 	{"MODE", &Server::handleMode},
+	{"PING", &Server::handlePing},
 };
 
 Server::Server(int port, const std::string &password) : _port(port), _password(password), _reuse(1)
@@ -151,7 +152,7 @@ Server::Server(int port, const std::string &password) : _port(port), _password(p
 				for (size_t c = 0; c < commands.size(); ++c)
 					Server::handleCommand(client, commands[c]); // Her komut için handleCommand fonksiyonu çağrılır.
 
-				if (!client.passCheck)
+				if (!client.passCheck && !client.isCap)
 				{
 					close(client.cliFd);
 					pollfds.erase(pollfds.begin() + i); // Client bağlantısı kapatılır ve pollfds vektöründen çıkarılır.
@@ -225,7 +226,6 @@ void Server::handleCommand(Client &client, const std::string &command)
 			return;
 		}
 	}
-
 	std::cout << RED << "Unknown command: " << _command << RESET << std::endl; // Eğer komut bulunamazsa, bilinmeyen komut mesajı yazdırılır.
 }
 

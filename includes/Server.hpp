@@ -64,6 +64,7 @@ class Server
 		void handleCap(const std::string& channelName, Client& client);
 		void handleInvite(const std::string& arg, Client& client);
 		void handleMode(const std::string& arg, Client& client);
+		void handlePing(const std::string& arg, Client& client);
 
 
 		
