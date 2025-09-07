@@ -35,17 +35,7 @@ void Server::handleJoin(const std::string& arg, Client& client)
 	else
 	{
 		channel = &it->second;
-
-		bool isInvited = false;
-		for (size_t i = 0; i < channel->getInvitedUsers().size(); ++i)
-		{
-			if (channel->getInvitedUsers()[i]->nickName == client.nickName)
-			{
-				isInvited = true;
-				break;
-			}
-		}
-		
+		bool isInvited = channel->isInvited(client.cliFd);
 		if (channel->isClientInChannel(&client))
 		{
 			writeReply(client.cliFd, "443 " + client.nickName + " " + channelName + " :is already on channel\r\n"); // ERR_USERONCHANNEL
@@ -75,21 +65,7 @@ void Server::handleJoin(const std::string& arg, Client& client)
 	std::string joinMessage = ":" + client.nickName + " JOIN :" + channelName + "\r\n";
 	channel->broadcastMessage(joinMessage, &client, *this);
 
-	//Kullanıcıları listele
-	std::string namesList = "353 " + client.nickName + " = " + channelName + " :";
-	for (size_t i = 0; i < channel->getClients().size(); ++i)
-	{
-		if (channel->getClients()[i]->isOperator)
-			namesList += "@"; // Operatörleri işaretle
-		namesList += channel->getClients()[i]->nickName;
-		if (i < channel->getClients().size() - 1)
-			namesList += " ";
-	}
-	namesList += "\r\n";
-	writeReply(client.cliFd, namesList);
-	writeReply(client.cliFd, "366 " + client.nickName + " " + channelName + " :End of /NAMES list.\r\n"); // RPL_ENDOFNAMES
-
-	// Topic'i göster
+	// Topici göster
 	if (!channel->getTopic().empty())
 	{
 		std::string topicMessage = "332 " + client.nickName + " " + channelName + " :" + channel->getTopic() + "\r\n"; // RPL_TOPIC
@@ -99,4 +75,21 @@ void Server::handleJoin(const std::string& arg, Client& client)
 	{
 		writeReply(client.cliFd, "331 " + client.nickName + " " + channelName + " :No topic is set\r\n"); // RPL_NOTOPIC
 	}
+
+	//Kullanıcıları listele
+	std::string namesList = "353 " + client.nickName + " = " + channelName + " :";
+	for (std::map<int, Client *>::iterator it = channel->getClients().begin(); it != channel->getClients().end(); ++it)
+	{
+		Client *cl = it->second;
+		if (cl)
+		{
+			if (cl->isOperator)
+				namesList += "@"; // Operatörleri işaretle
+			namesList += cl->nickName + " ";
+		}
+	}
+	namesList += "\r\n";
+	writeReply(client.cliFd, namesList);
+	writeReply(client.cliFd, "366 " + client.nickName + " " + channelName + " :End of /NAMES list.\r\n"); // RPL_ENDOFNAMES
+
 }

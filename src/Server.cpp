@@ -2,11 +2,11 @@
 
 Client* Server::findClientByNick(const std::string &nick)
 {
-    for (size_t i = 0; i < clients.size(); ++i)
-    {
-        if (clients[i].nickName == nick)
-            return &clients[i];
-    }
+    for (std::map<int, Client>::iterator it = clients.begin(); it != clients.end(); ++it)
+	{
+		if (it->second.nickName == nick)
+			return &it->second;
+	}
     return NULL;
 }
 
@@ -23,7 +23,7 @@ void Server::checkIfRegistered(Client &client)
 	if (!client.isRegistered && client.passCheck && !client.nickName.empty() && !client.user.empty())
 	{
 		client.isRegistered = true; // Client kayıtlı ise, isRegistered'i true yapar.
-		writeReply(client.cliFd, client.nickName+ ": Welcome to the IRC Network\r\n");
+		writeReply(client.cliFd, "001 " + client.nickName + " :Welcome to the IRC Network\r\n");
 		std::cout << GREEN << "Client " << client.nickName << " registered successfully." << RESET << std::endl;
 	}
 }
@@ -102,7 +102,7 @@ Server::Server(int port, const std::string &password) : _port(port), _password(p
 			newClient.cliFd = clientFd;
 			newClient.port = ntohs(clientAddress.sin_port); // Client port adresinin byte sıralamasını değiştirir.
 			inet_ntop(AF_INET, &clientAddress.sin_addr, newClient.ipAddress, INET_ADDRSTRLEN); // Client IP adresini alır ve binary'den string'e çevirir.
-			this->clients.push_back(newClient); // Yeni client'ı clients vektörüne ekler.
+			this->clients.insert(std::make_pair(clientFd, newClient)); // Yeni client'ı clients haritasına ekler.
 
 			pollfd clientPollFd = {clientFd, POLLIN, 0}; // Yeni client için pollfd struct'ını doldur.
 			pollfds.push_back(clientPollFd); // Yeni client'ın pollfd'sini pollfds vektörüne ekler.
@@ -113,12 +113,13 @@ Server::Server(int port, const std::string &password) : _port(port), _password(p
 		// Verileri okuma
 		for (size_t i = 1; i < pollfds.size(); ++i)
 		{
-			Client &client = this->clients[i - 1]; // pollfds vektöründeki client'ı alır. İlk eleman sunucu socket olduğu için 1'den başlar.
+			int clientFd = pollfds[i].fd; // pollfds vektöründeki client'ı alır. İlk eleman sunucu socket olduğu için 1'den başlar.
+			Client &client = this->clients[clientFd]; // clients haritasından client'ı alır.
 			if (client.toBeDisconnected)
 			{
 				close(client.cliFd); // Eğer client toBeDisconnected ise, bağlantıyı kapatır.
+				this->clients.erase(client.cliFd); // clients haritasından client'ı siler. (?)
 				pollfds.erase(pollfds.begin() + i); // pollfds vektöründen client'ı siler.
-				this->clients.erase(this->clients.begin() + i - 1); // clients vektöründen client'ı siler.
 				--i; // Döngüdeki indeksi azaltır.
 				std::cout << RED << "Client disconnected(toBeDisconnected): " << GREEN << client.ipAddress << ":" << client.port << RESET << std::endl; // Client'ın bağlantısı kesildiğinde mesaj yazdırılır.
 				continue;
@@ -131,8 +132,8 @@ Server::Server(int port, const std::string &password) : _port(port), _password(p
 				{
 					this->handleQuit("Connection closed by client.", client); // Eğer veri okunamazsa, client bağlantısı kapatılır ve handleQuit fonksiyonu çağrılır.
 					close(client.cliFd);
+					this->clients.erase(client.cliFd); // Client da clients haritasından silinir. (?)
 					pollfds.erase(pollfds.begin() + i); // Eğer veri okunamazsa, client bağlantısı kapatılır ve pollfds vektöründen çıkarılır.
-					this->clients.erase(this->clients.begin() + i - 1); // Client da clients vektöründen silinir.
 					--i;
 					std::cout << RED << "Client disconnected(recv): " << GREEN << client.ipAddress << ":" << client.port << RESET << std::endl; // Client'ın bağlantısı kesildiğinde mesaj yazdırılır.
 					continue;
@@ -155,15 +156,8 @@ Server::Server(int port, const std::string &password) : _port(port), _password(p
 				if (!client.passCheck && !client.isCap)
 				{
 					close(client.cliFd);
+					this->clients.erase(client.cliFd); // Client da clients haritasından silinir.
 					pollfds.erase(pollfds.begin() + i); // Client bağlantısı kapatılır ve pollfds vektöründen çıkarılır.
-					for (std::vector<Client>::iterator it = clients.begin(); it != clients.end(); ++it)
-					{
-						if (&(*it) == &client) // Eğer client bulunursa
-						{
-							clients.erase(it); // Client'ı clients vektöründen siler.
-							break;
-						}
-					}
 					std::cout << RED << "Client disconnected due to wrong password: " << GREEN << client.ipAddress << ":" << client.port << RESET << std::endl; // Client'ın bağlantısı kesildiğinde mesaj yazdırılır.
 					--i;
 					break;
@@ -178,9 +172,11 @@ Server::Server(int port, const std::string &password) : _port(port), _password(p
 					int written = send(client.cliFd, msg.c_str(), msg.length(), 0); // Mesaj client'a gönderilir.
 					if (written <= 0)
 					{
+						if (errno == EWOULDBLOCK || errno == EAGAIN)
+							continue; // Eğer gönderme işlemi bloklanırsa, devam et.
 						close(client.cliFd);
+						this->clients.erase(client.cliFd); // Client da clients haritasından silinir.
 						pollfds.erase(pollfds.begin() + i); // Eğer mesaj gönderilemezse, client bağlantısı kapatılır ve pollfds vektöründen çıkarılır.
-						this->clients.erase(this->clients.begin() + i - 1); // Client da clients vektöründen silinir.
 						--i;
 						continue;
 					}

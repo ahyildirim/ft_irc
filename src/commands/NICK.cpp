@@ -14,9 +14,9 @@ void Server::handleNick(const std::string& nickName, Client& client)
 		return;
 	}
 
-	for (size_t i = 0; i < this->clients.size(); ++i)
+	for (std::map<int, Client>::iterator it = this->clients.begin(); it != this->clients.end(); ++it)
 	{
-		if (this->clients[i].nickName == nickName)
+		if (it->second.nickName == nickName)
 		{
 			writeReply(client.cliFd, "Nickname already in use.\r\n");
 			return;

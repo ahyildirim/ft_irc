@@ -10,9 +10,9 @@ class Server;
 class Channel {
     private:
         std::string _name;
-        std::vector<Client *> _clients;
-        std::vector<Client *> _operators;
-        std::vector<Client *> _invitedUsers;
+        std::map<int, Client *> _clients;
+        std::map<int, Client *> _operators;
+        std::map<int, Client *> _invitedUsers;
         std::string _topic;
 
         bool _toBeRemoved;
@@ -34,8 +34,8 @@ class Channel {
         bool isTopicRestricted() const;
         bool isToBeRemoved() const;
         size_t getUserLimit() const;
-        std::vector<Client*>& getClients();
-        std::vector<Client*>& getInvitedUsers();
+        std::map<int, Client *>& getClients();
+        std::map<int, Client *>& getInvitedUsers();
 
         bool hasKey() const;
         bool hasUserLimit() const;
@@ -53,7 +53,9 @@ class Channel {
         void removeOperator(Client* client);
         void broadcastMessage(const std::string& message, Client* sender, Server &server);
         bool isClientInChannel(Client* client) const;
+        bool isOperator(int clientFd) const;
         void addInvitedUser(Client* client);
+        bool isInvited(int clientFd) const;
 
 };
 

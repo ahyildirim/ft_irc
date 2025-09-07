@@ -13,6 +13,7 @@
 # include <unistd.h>
 # include <map>
 # include <csignal>
+# include <cerrno>
 # include "Client.hpp"
 # include "Utils.hpp"
 # include "Channel.hpp"
@@ -28,10 +29,9 @@ class Server
 		int _port;
 		std::string _password;
 		int _server_socket_fd;
-		std::vector<int> _client_fds;
 		char _buffer[1024];
-		std::vector<Client> clients;
 		int _reuse;
+		std::map<int, Client> clients;
 		std::map<std::string, Channel> _channels;
 
 	public:

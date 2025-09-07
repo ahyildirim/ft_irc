@@ -46,15 +46,7 @@ void Server::handlePrivmsg(const std::string& arg, Client& client)
     else
     {
         // Kullanıcıya özel mesaj
-        Client* targetClient = NULL;
-        for (size_t i = 0; i < clients.size(); ++i)
-        {
-            if (clients[i].nickName == target)
-            {
-                targetClient = &clients[i];
-                break;
-            }
-        }
+        Client* targetClient = findClientByNick(target);
         if (!targetClient)
         {
             writeReply(client.cliFd, "No such nick: " + target + "\r\n");
@@ -62,5 +54,6 @@ void Server::handlePrivmsg(const std::string& arg, Client& client)
         }
         std::string msg = ":" + client.nickName + " PRIVMSG " + target + " :" + message + "\r\n";
         targetClient->messageBox.push_back(msg);
+        targetClient->setPollWrite(*this); // Yazma olayını ayarlar. (Issue #1 çözümü)
     }
 }

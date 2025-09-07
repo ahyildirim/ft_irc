@@ -41,12 +41,12 @@ size_t Channel::getUserLimit() const
     return this->_userLimit;
 }
 
-std::vector<Client*>& Channel::getInvitedUsers()
+std::map<int, Client*>& Channel::getInvitedUsers()
 {
     return this->_invitedUsers;
 }
 
-std::vector<Client*>& Channel::getClients()
+std::map<int, Client*>& Channel::getClients()
 {
     return this->_clients;
 }
@@ -92,137 +92,94 @@ void Channel::setUserLimit(size_t limit)
 //Client Management
 bool Channel::isClientInChannel(Client* client) const 
 {
-    for (size_t i = 0; i < _clients.size(); ++i)
-    {
-        if(_clients[i]->nickName == client->nickName)
-            return true;
-    }
-    return false;
+    if (!client)
+        return false;
+    return _clients.find(client->cliFd) != _clients.end();
 }
 
 void Channel::addClient(Client* client) 
 {
+    if (!client)
+        return;
     if (!isClientInChannel(client))
     {
-        _clients.push_back(client); // Client'ı kanala ekler.
+        _clients.insert(std::make_pair(client->cliFd, client));
         std::cout << GREEN << "Client " << client->nickName << " joined channel " << RED << _name << RESET << std::endl;
     }
 }
 
 void Channel::removeClient(Client* client)
 {
-    bool wasOperator = client->isOperator; // Çıkan kişi operatör mü?
+    if (!client)
+        return;
+    bool wasOperator = isOperator(client->cliFd);
+    _clients.erase(client->cliFd);
+    _operators.erase(client->cliFd);
+    _invitedUsers.erase(client->cliFd);
 
-    // Client listesinden çıkar
-    for (std::vector<Client*>::iterator it = _clients.begin(); it != _clients.end(); ++it)
+    std::cout << GREEN << "Client " << client->nickName << " left channel " << RED << _name << RESET << std::endl;
+
+    if (wasOperator && !_clients.empty() && _operators.empty())
     {
-        if ((*it)->nickName == client->nickName)
-        {
-            _clients.erase(it);
-            client->isOperator = false;
-            std::cout << GREEN << "Client " << client->nickName << " left channel " << RED << _name << RESET << std::endl;
-            break;
-        }
+        Client* newOp = _clients.begin()->second;
+        addOperator(newOp);
+        std::cout << GREEN << "Client " << newOp->nickName << " is now an operator in channel " << RED << _name << RESET << std::endl;
     }
 
-    // Operatör listesinden çıkar (eğer listedeyse)
-    for (std::vector<Client*>::iterator it = _operators.begin(); it != _operators.end(); ++it)
-    {
-        if ((*it)->nickName == client->nickName)
-        {
-            _operators.erase(it);
-            std::cout << GREEN << "Client " << client->nickName << " removed from operators in channel " << RED << _name << RESET << std::endl;
-            break;
-        }
-    }
-
-    for (std::vector<Client*>::iterator it = _invitedUsers.begin(); it != _invitedUsers.end(); ++it)
-    {
-        if ((*it)->nickName == client->nickName)
-        {
-            _invitedUsers.erase(it);
-            std::cout << GREEN << "Client " << client->nickName << " removed from invited users in channel " << RED << _name << RESET << std::endl;
-            break;
-        }
-    }
-
-    // Eğer çıkan operatörse ve kanalda hala client varsa, yeni bir operatör ata
-    if (wasOperator && !_clients.empty()) // <-- !_clients.empty() kontrolünü ekleyin
-    {
-        bool operatorExists = false;
-        for (size_t i = 0; i < _clients.size(); ++i)
-        {
-            if (_clients[i]->isOperator)
-            {
-                operatorExists = true;
-                break;
-            }
-        }
-        // Kanala yeni bir operatör atanmamışsa, ilk client'ı operatör yap
-        if (!operatorExists) // <-- !operatorExists kontrolünü ekleyin
-        {
-            _clients.front()->isOperator = true;
-            _operators.push_back(_clients.front());
-            std::cout << GREEN << "Client " << _clients.front()->nickName << " is now the operator of channel " << RED << _name << RESET << std::endl;
-        }
-    }
-
-
-    // Kanal boş kaldıysa silinmeye işaretle
     if (_clients.empty())
     {
-        std::cout << RED << "Channel " << _name << " is now empty and will be removed." << RESET << std::endl;
-        _name.clear();
-        _topic.clear();
-        _clients.clear();
-        _operators.clear();
-        _invitedUsers.clear();
         _toBeRemoved = true;
+        std::cout << RED << "Channel " << _name << " is now empty and will be removed." << RESET << std::endl;
     }
+}
+
+bool Channel::isOperator(int clientFd) const
+{
+    return _operators.find(clientFd) != _operators.end();
 }
 
 void Channel::addOperator(Client* client) 
 {
-    _operators.push_back(client); // Client'ı kanal operatörü olarak ekler.
-    client->isOperator = true; // Client'ın operatör olduğunu işaretler.
-    std::cout << GREEN << "Client " << client->nickName << " is now an operator in channel " << RED << _name << RESET << std::endl;
+    if (!client)
+        return;
+    if (!isOperator(client->cliFd))
+    {
+        _operators.insert(std::make_pair(client->cliFd, client));
+        client->isOperator = true;
+        std::cout << GREEN << "Client " << client->nickName << " is now an operator in channel " << RED << _name << RESET << std::endl;
+    }
 }
 
 void Channel::removeOperator(Client* client) 
 {
-    for (std::vector<Client*>::iterator it = this->_operators.begin(); it != this->_operators.end(); ++it)
-    {
-        if ((*it)->nickName == client->nickName)
-        {
-            this->_operators.erase(it);
-            client->isOperator = false; // Client'ın operatörlük yetkisini sıfırlar.
-            std::cout << GREEN << "Client " << client->nickName << " removed from operators in channel " << RED << _name << RESET << std::endl;
-            break;
-        }
-    }
+    if (!client)
+        return;
+    _operators.erase(client->cliFd);
+    client->isOperator = false;
+    std::cout << GREEN << "Client " << client->nickName << " removed from operators in channel " << RED << _name << RESET << std::endl;
+}
+
+bool Channel::isInvited(int clientFd) const
+{
+    return _invitedUsers.find(clientFd) != _invitedUsers.end();
 }
 
 void Channel::addInvitedUser(Client* client) 
 {
-    // Zaten davet edilmiş mi kontrol et
-    for (size_t i = 0; i < _invitedUsers.size(); ++i)
-    {
-        if (_invitedUsers[i] == client) // Pointer karşılaştırması
-            return; // Zaten listede, tekrar ekleme
-    }
-
-    // Yoksa ekle
-    _invitedUsers.push_back(client);
+    if (!client)
+        return;
+    if (!isInvited(client->cliFd))
+        _invitedUsers.insert(std::make_pair(client->cliFd, client));
 }
 
-void Channel::broadcastMessage(const std::string& message, Client* sender, Server &server) //ne oe bi fonksiyon bu ya
+void Channel::broadcastMessage(const std::string& message, Client* sender, Server &server)
 {
-    for (size_t i = 0; i < _clients.size(); ++i)
+    for (std::map<int, Client *>::iterator it = _clients.begin(); it != _clients.end(); ++it)
     {
-        if ((!sender || _clients[i] != sender) && !_clients[i]->toBeDisconnected) // Gönderen client hariç tüm clientlara mesaj gönderilir.
-        {
-            _clients[i]->messageBox.push_back(message);
-            _clients[i]->setPollWrite(server); // Yazma olayını ayarlar. (Issue #1 çözümü)
-        }
+        Client* client = it->second;
+        if (!client || (sender && client->cliFd == sender->cliFd))
+            continue;
+        client->messageBox.push_back(message);
+        client->setPollWrite(server); // Yazma olayını ayarlar. (Issue #1 çözümü)
     }
 }
