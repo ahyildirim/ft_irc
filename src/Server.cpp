@@ -41,6 +41,7 @@ const Server::Command Server::commandTable[] = {
 	{"INVITE", &Server::handleInvite},
 	{"MODE", &Server::handleMode},
 	{"PING", &Server::handlePing},
+	{"NAMES", &Server::handleNames},
 };
 
 Server::Server(int port, const std::string &password) : _port(port), _password(password), _reuse(1)

@@ -62,7 +62,7 @@ void Server::handleJoin(const std::string& arg, Client& client)
 	}
 
 	channel->addClient(&client);
-	std::string joinMessage = ":" + client.nickName + " JOIN :" + channelName + "\r\n";
+	std::string joinMessage = ":" + client.nickName + " JOIN " + channelName + "\r\n";
 	channel->broadcastMessage(joinMessage, &client, *this);
 
 	// Topici göster
@@ -89,6 +89,8 @@ void Server::handleJoin(const std::string& arg, Client& client)
 		}
 	}
 	namesList += "\r\n";
+	if (!namesList.empty())
+		namesList = namesList.substr(0, namesList.length() - 1); // Son boşluğu kaldır
 	writeReply(client.cliFd, namesList);
 	writeReply(client.cliFd, "366 " + client.nickName + " " + channelName + " :End of /NAMES list.\r\n"); // RPL_ENDOFNAMES
 

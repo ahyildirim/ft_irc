@@ -39,7 +39,7 @@ class Server
 
 		struct Command{
 			std::string cmd;
-			void (Server::*handler)(const std::string& args, Client& client); //içeriğe arg, client eklenecek
+			void (Server::*handler)(const std::string& args, Client& client);
 		};
 
 		static const Command commandTable[];
@@ -51,6 +51,7 @@ class Server
 		void checkIfRegistered(Client &client);
 
 		Channel* findChannel(const std::string& channelName);
+		Client* findClientByNick(const std::string &nick);
 
 		//Commands
 		void handlePass(const std::string& password, Client& client);
@@ -65,10 +66,10 @@ class Server
 		void handleInvite(const std::string& arg, Client& client);
 		void handleMode(const std::string& arg, Client& client);
 		void handlePing(const std::string& arg, Client& client);
+		void handleNames(const std::string& arg, Client& client);
 
 
 		
-		Client* findClientByNick(const std::string &nick);
 };
 
 #endif
