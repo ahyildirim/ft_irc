@@ -5,19 +5,13 @@ void Server::handlePass(const std::string& password, Client& client)
 	std::string trimmedPassword = (password[0] == ':') ? password.substr(1) : password;
 	if (client.passCheck)
 	{
-		writeReply(client.cliFd, "You are already authenticated.\r\n");
+		writeReply(client.cliFd, ERR_ALREADYREGISTRED(client.nickName));
 		return;
 	}
 
-	if (trimmedPassword.empty())
+	if ((trimmedPassword.empty()) || trimmedPassword != this->_password)
 	{
-		writeReply(client.cliFd, "Password cannot be empty.\r\n");
-		return;
-	}
-
-	if (trimmedPassword != this->_password)
-	{
-		writeReply(client.cliFd, "Wrong password.\r\n");
+		writeReply(client.cliFd, ERR_PASSWDMISMATCH(client.nickName));
 		return;
 	}
 	

@@ -6,7 +6,7 @@ void Server::handleInvite(const std::string& arg, Client& client)
 
     if (params.size() < 2)
     {
-        writeReply(client.cliFd, "Usage: INVITE <nick> <channel>\r\n");
+        writeReply(client.cliFd, ERR_NEEDMOREPARAMS(client.nickName, "INVITE")); // ERR_NEEDMOREPARAMS
         return;
     }
 
@@ -16,32 +16,26 @@ void Server::handleInvite(const std::string& arg, Client& client)
     Client* targetClient = findClientByNick(nick);
     Channel* targetChannel = findChannel(channelName);
 
-    if (!targetClient)
+    if (!targetClient || !targetChannel)
     {
-        writeReply(client.cliFd, "No such nick/channel\r\n");
-        return;
-    }
-
-    if (!targetChannel)
-    {
-        writeReply(client.cliFd, "No such channel\r\n");
+        writeReply(client.cliFd, ERR_NOSUCHNICK(client.nickName, nick));
         return;
     }
 
     if (!targetChannel->isClientInChannel(&client))
     {
-        writeReply(client.cliFd, "You are not in channel " + channelName + "\r\n");
+        writeReply(client.cliFd, ERR_NOTONCHANNEL(client.nickName, channelName));
         return;
     }
 
     if (targetChannel->isClientInChannel(targetClient))
     {
-        writeReply(client.cliFd, "User " + nick + " is already in channel " + channelName + "\r\n");
+        writeReply(client.cliFd, ERR_USERONCHANNEL(nick, channelName));
         return;
     }
 
     // If we reach this point, we have a valid target client and channel
     targetChannel->addInvitedUser(targetClient);
-    writeReply(client.cliFd, "Invited " + nick + " to " + channelName + "\r\n");
-    writeReply(targetClient->cliFd, "You have been invited to channel " + channelName + " by " + client.nickName + "\r\n");
+    writeReply(client.cliFd, RPL_INVITING(client.nickName, channelName, nick));
+    writeReply(targetClient->cliFd, RPL_INVITED(client.nickName, channelName));
 }

@@ -4,13 +4,13 @@ void Server::handleNick(const std::string& nickName, Client& client)
 {
 	if (!client.passCheck)
 	{
-		writeReply(client.cliFd, "You must authenticate first with PASS command.\r\n");
+		writeReply(client.cliFd, ERR_NOTREGISTERED(client.nickName));
 		return;
 	}
 
 	if (nickName.empty())
 	{
-		writeReply(client.cliFd, "Nickname cannot be empty.\r\n");
+		writeReply(client.cliFd, ERR_NONICKNAMEGIVEN(client.nickName));
 		return;
 	}
 
@@ -18,7 +18,7 @@ void Server::handleNick(const std::string& nickName, Client& client)
 	{
 		if (it->second.nickName == nickName)
 		{
-			writeReply(client.cliFd, "Nickname already in use.\r\n");
+			writeReply(client.cliFd, ERR_NICKNAMEINUSE(client.nickName, nickName));
 			return;
 		}
 	}

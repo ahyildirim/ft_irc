@@ -6,7 +6,7 @@ void Server::handleKick(const std::string& args, Client& client)
 
     if (params.size() < 2)
     {
-        writeReply(client.cliFd, "Usage: KICK <#channel> <nick> [<reason>]\r\n");
+        writeReply(client.cliFd, ERR_NEEDMOREPARAMS(client.nickName, "KICK")); // ERR_NEEDMOREPARAMS
         return;
     }
 
@@ -19,26 +19,26 @@ void Server::handleKick(const std::string& args, Client& client)
     Channel *channel = findChannel(channelName);
     if (!channel)
     {
-        writeReply(client.cliFd, "403 " + client.nickName + " " + channelName + " :No such channel\r\n");
+        writeReply(client.cliFd, ERR_NOSUCHCHANNEL(client.nickName, channelName)); // ERR_NOSUCHCHANNEL
         return;
     }
 
     if (!channel->isClientInChannel(&client))
     {
-        writeReply(client.cliFd, "442 " + client.nickName + " " + channelName + " :You're not on that channel\r\n");
+        writeReply(client.cliFd, ERR_NOTONCHANNEL(client.nickName, channelName)); // ERR_NOTONCHANNEL
         return;
     }
 
     if (!client.isOperator)
     {
-        writeReply(client.cliFd, "482 " + client.nickName + " " + channelName + " :You're not channel operator\r\n");
+        writeReply(client.cliFd, ERR_CHANOPRIVSNEEDED(client.nickName, channelName)); // ERR_CHANOPRIVSNEEDED
         return;
     }
 
     Client *target = findClientByNick(nickToKick);
     if (!target || !channel->isClientInChannel(target))
     {
-        writeReply(client.cliFd, "441 " + client.nickName + " " + nickToKick + " " + channelName + " :They aren't on that channel\r\n");
+        writeReply(client.cliFd, ERR_USERNOTINCHANNEL(client.nickName, channelName)); // ERR_USERNOTINCHANNEL
         return;
     }
 

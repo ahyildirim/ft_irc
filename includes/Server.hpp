@@ -17,6 +17,7 @@
 # include "Client.hpp"
 # include "Utils.hpp"
 # include "Channel.hpp"
+# include "Replies.hpp"
 
 class Client;
 class Channel;

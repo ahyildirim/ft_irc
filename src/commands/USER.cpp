@@ -4,13 +4,13 @@ void Server::handleUser(const std::string& userName, Client& client)
 {
 	if (!client.passCheck)
 	{
-		writeReply(client.cliFd, "You must authenticate first with PASS command.\r\n");
+		writeReply(client.cliFd, ERR_NOTREGISTERED(client.nickName)); // RPL_NOTREGISTERED
 		return;
 	}
 
 	if (userName.empty())
 	{
-		writeReply(client.cliFd, "Username cannot be empty.\r\n");
+		writeReply(client.cliFd, ERR_NEEDMOREPARAMS(client.nickName, "USER")); // ERR_NEEDMOREPARAMS
 		return;
 	}
 

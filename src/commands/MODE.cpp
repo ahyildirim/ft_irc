@@ -4,14 +4,14 @@ void Server::handleMode(const std::string &arg, Client& client)
 {
     if (!client.isRegistered)
     {
-		writeReply(client.cliFd, "You must register first with NICK and USER commands.\r\n");
+		writeReply(client.cliFd, ERR_NOTREGISTERED(client.nickName)); // RPL_NOTREGISTERED
 		return;
     }
 
     std::vector<std::string> params = splitBySpace(arg);
     if (params.empty())
     {
-        writeReply(client.cliFd, "Usage: MODE <#channel> [<modes> [<mode_parameters>]]\r\n");
+        writeReply(client.cliFd, ERR_NEEDMOREPARAMS(client.nickName, "MODE")); // ERR_NEEDMOREPARAMS
         return;
     }
 
@@ -19,7 +19,7 @@ void Server::handleMode(const std::string &arg, Client& client)
     Channel* channel = findChannel(channelName);
     if (!channel)
     {
-        writeReply(client.cliFd, "403 " + client.nickName + " " + channelName + " :No such channel\r\n");
+        writeReply(client.cliFd, ERR_NOSUCHCHANNEL(client.nickName, channelName)); // ERR_NOSUCHCHANNEL
         return;
     }
 
@@ -33,13 +33,15 @@ void Server::handleMode(const std::string &arg, Client& client)
         if (channel->hasKey()) modeString += "k";
         if (channel->hasUserLimit()) modeString += "l";
 
-        writeReply(client.cliFd, "324 " + client.nickName + " " + channel->getName() + " " + modeString + " " + channel->getKey() + " " + to_string_c98(channel->getUserLimit()) + "\r\n");
+        writeReply(client.cliFd, RPL_CHANNELMODEIS(client.nickName, channelName, modeString,
+                                              channel->hasKey() ? channel->getKey() : "",
+                                              channel->hasUserLimit() ? to_string_c98(channel->getUserLimit()) : ""));
         return;
     }
 
     if (!isOp)
     {
-        writeReply(client.cliFd, "482 " + client.nickName + " " + channel->getName() + " :You're not channel operator\r\n");
+        writeReply(client.cliFd, ERR_CHANOPRIVSNEEDED(client.nickName, channelName)); // ERR_CHANOPRIVSNEEDED
         return;
     }
 
@@ -76,7 +78,7 @@ void Server::handleMode(const std::string &arg, Client& client)
             case 'k':
                 if (paramIndex >= modeParams.size() && adding)
                 {
-                    writeReply(client.cliFd, "461 " + client.nickName + " MODE :Not enough parameters\r\n");
+                    writeReply(client.cliFd, ERR_NEEDMOREPARAMS(client.nickName, "MODE")); // ERR_NEEDMOREPARAMS
                     continue;
                 }
                 if (adding)
@@ -91,7 +93,7 @@ void Server::handleMode(const std::string &arg, Client& client)
             case 'o':
                 if (paramIndex >= modeParams.size())
                 {
-                    writeReply(client.cliFd, "461 " + client.nickName + " MODE :Not enough parameters\r\n");
+                    writeReply(client.cliFd, ERR_NEEDMOREPARAMS(client.nickName, "MODE")); // ERR_NEEDMOREPARAMS
                     continue;
                 }
 
@@ -102,7 +104,7 @@ void Server::handleMode(const std::string &arg, Client& client)
 
                     if (!targetClient || !channel->isClientInChannel(targetClient))
                     {
-                        writeReply(client.cliFd, "401 " + client.nickName + " " + targetNick + " :No such nick/channel\r\n");
+                        writeReply(client.cliFd, ERR_NOSUCHNICK(client.nickName, targetNick)); // ERR_NOSUCHNICK
                         continue;
                     }
 
@@ -117,7 +119,7 @@ void Server::handleMode(const std::string &arg, Client& client)
                 {
                     if (paramIndex >= modeParams.size())
                     {
-                        writeReply(client.cliFd, "461 " + client.nickName + " MODE :Not enough parameters\r\n");
+                        writeReply(client.cliFd, ERR_NEEDMOREPARAMS(client.nickName, "MODE")); // ERR_NEEDMOREPARAMS
                         continue;
                     }
                     try
@@ -127,12 +129,12 @@ void Server::handleMode(const std::string &arg, Client& client)
                     }
                     catch (const std::invalid_argument& ia)
                     {
-                        writeReply(client.cliFd, "421 " + client.nickName + " MODE :Invalid argument\r\n");
+                        writeReply(client.cliFd, ERR_UNKNOWNCOMMAND(client.nickName, "MODE")); // ERR_UNKNOWNCOMMAND
                         continue;
                     }
                     catch (const std::out_of_range& oor)
                     {
-                        writeReply(client.cliFd, "421 " + client.nickName + " MODE :Invalid argument\r\n");
+                        writeReply(client.cliFd, ERR_UNKNOWNCOMMAND(client.nickName, "MODE")); // ERR_UNKNOWNCOMMAND
                         continue;
                     }
                 }
@@ -140,7 +142,7 @@ void Server::handleMode(const std::string &arg, Client& client)
                     channel->setUserLimit(0);
                 break;
             default:
-                writeReply(client.cliFd, "472 " + client.nickName + " " + modeChar + " :is unknown mode char\r\n");
+                writeReply(client.cliFd, ERR_UNKNOWNMODE(modeChar, channelName)); // ERR_UNKNOWNMODE
                 break;
         }
     }

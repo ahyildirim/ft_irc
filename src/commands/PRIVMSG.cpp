@@ -4,14 +4,14 @@ void Server::handlePrivmsg(const std::string& arg, Client& client)
 {
     if (!client.isRegistered)
     {
-        writeReply(client.cliFd, "You must register first with NICK and USER commands.\r\n");
+        writeReply(client.cliFd, ERR_NOTREGISTERED(client.nickName)); // RPL_NOTREGISTERED
         return;
     }
 
     std::vector<std::string> tokens = splitCommand(arg, 1);
     if (tokens.size() < 2)
     {
-        writeReply(client.cliFd, "Usage: PRIVMSG <target> :<message>\r\n");
+        writeReply(client.cliFd, ERR_NEEDMOREPARAMS(client.nickName, "PRIVMSG")); // ERR_NEEDMOREPARAMS
         return;
     }
 
@@ -19,7 +19,7 @@ void Server::handlePrivmsg(const std::string& arg, Client& client)
     std::string message = trim(tokens[1]);
     if (message.empty())
     {
-        writeReply(client.cliFd, "No text to send.\r\n");
+        writeReply(client.cliFd, ERR_NOTEXTTOSEND(client.nickName)); // ERR_NOTEXTTOSEND
         return;
     }
     if (message[0] == ':')
@@ -31,17 +31,16 @@ void Server::handlePrivmsg(const std::string& arg, Client& client)
         std::map<std::string, Channel>::iterator it = _channels.find(target);
         if (it == _channels.end())
         {
-            writeReply(client.cliFd, "No such channel: " + target + "\r\n");
+            writeReply(client.cliFd, ERR_NOSUCHCHANNEL(client.nickName, target)); // ERR_NOSUCHCHANNEL
             return;
         }
         Channel& channel = it->second;
         if (!channel.isClientInChannel(&client))
         {
-            writeReply(client.cliFd, "You are not in channel " + target + ".\r\n");
+            writeReply(client.cliFd, ERR_NOTONCHANNEL(client.nickName, target)); // ERR_NOTONCHANNEL
             return;
         }
-        std::string msg = ":" + client.nickName + " PRIVMSG " + target + " :" + message + "\r\n";
-        channel.broadcastMessage(msg, &client, *this);
+        channel.broadcastMessage(RPL_PRIVMSG(client.nickName, target, message), &client, *this);
     }
     else
     {
@@ -49,11 +48,10 @@ void Server::handlePrivmsg(const std::string& arg, Client& client)
         Client* targetClient = findClientByNick(target);
         if (!targetClient)
         {
-            writeReply(client.cliFd, "No such nick: " + target + "\r\n");
+            writeReply(client.cliFd, ERR_NOSUCHNICK(client.nickName, target)); // ERR_NOSUCHNICK
             return;
         }
-        std::string msg = ":" + client.nickName + " PRIVMSG " + target + " :" + message + "\r\n";
-        targetClient->messageBox.push_back(msg);
+        targetClient->messageBox.push_back(RPL_PRIVMSG(client.nickName, target, message));
         targetClient->setPollWrite(*this); // Yazma olayını ayarlar. (Issue #1 çözümü)
     }
 }

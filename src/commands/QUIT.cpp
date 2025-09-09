@@ -2,8 +2,6 @@
 
 void Server::handleQuit(const std::string& reason, Client& client)
 {
-	std::string quitMessage = ":" + client.nickName + " QUIT :" + reason + "\r\n";
-
 	// Kanallara broadcast
 	for (std::map<std::string, Channel>::iterator it = _channels.begin(); it != _channels.end(); ++it)
 	{
@@ -11,7 +9,7 @@ void Server::handleQuit(const std::string& reason, Client& client)
 		if (channel.isClientInChannel(&client))
 		{
 			channel.removeClient(&client);
-			channel.broadcastMessage(quitMessage, &client, *this);
+			channel.broadcastMessage(RPL_QUIT(client.nickName, reason), &client, *this);
 		}
 	}
 

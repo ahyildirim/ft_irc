@@ -4,7 +4,7 @@ void Server::handleNames(const std::string& arg, Client &client)
 {
     if (!client.isRegistered)
     {
-        writeReply(client.cliFd, "451 :You have not registered\r\n"); // RPL_NOTREGISTERED
+        writeReply(client.cliFd, ERR_NOTREGISTERED(client.nickName)); // RPL_NOTREGISTERED
         return;
     }
     if (arg.empty())
@@ -21,8 +21,8 @@ void Server::handleNames(const std::string& arg, Client &client)
             if (!namesList.empty())
                 namesList = namesList.substr(0, namesList.length() - 1); // Son boşluğu kaldır
             namesList += "\r\n";
-            writeReply(client.cliFd, "353 " + client.nickName + " = " + channel.getName() + " :" + namesList + "\r\n");
-            writeReply(client.cliFd, "366 " + client.nickName + " " + channel.getName() + " :End of /NAMES list.\r\n");
+            writeReply(client.cliFd, RPL_NAMREPLY(client.nickName, channel.getName(), namesList));
+            writeReply(client.cliFd, RPL_ENDOFNAMES(client.nickName, channel.getName())); // RPL_ENDOFNAMES
         }
         return;
     }
@@ -34,7 +34,7 @@ void Server::handleNames(const std::string& arg, Client &client)
         Channel* channel = findChannel(channelName);
         if (!channel)
         {
-            writeReply(client.cliFd, "366 " + client.nickName + " " + channelName + " :End of /NAMES list.\r\n");
+            writeReply(client.cliFd, RPL_ENDOFNAMES(client.nickName, channelName));
             continue;
         }
 
@@ -46,7 +46,7 @@ void Server::handleNames(const std::string& arg, Client &client)
         }
         if (!namesList.empty())
             namesList = namesList.substr(0, namesList.length() - 1); // Son boşluğu kaldır
-        writeReply(client.cliFd, "353 " + client.nickName + " = " + channel->getName() + " :" + namesList + "\r\n");
-        writeReply(client.cliFd, "366 " + client.nickName + " " + channel->getName() + " :End of /NAMES list.\r\n");
+        writeReply(client.cliFd, RPL_NAMREPLY(client.nickName, channelName, namesList));
+        writeReply(client.cliFd, RPL_ENDOFNAMES(client.nickName, channelName)); // RPL_ENDOFNAMES
     }
 }

@@ -4,13 +4,13 @@ void Server::handleTopic(const std::string& arg, Client& client)
 {
 	if (!client.isRegistered)
 	{
-		writeReply(client.cliFd, "You must register first with NICK and USER commands.\r\n");
+		writeReply(client.cliFd, ERR_NOTREGISTERED(client.nickName)); // RPL_NOTREGISTERED
 		return;
 	}
 
 	if (arg.empty())
 	{
-		writeReply(client.cliFd, "Usage: TOPIC <#channel> [:<topic>]\r\n");
+		writeReply(client.cliFd, ERR_NEEDMOREPARAMS(client.nickName, "TOPIC")); // ERR_NEEDMOREPARAMS
 		return;
 	}
 
@@ -24,20 +24,20 @@ void Server::handleTopic(const std::string& arg, Client& client)
 
 	if (channelName.empty() || channelName[0] != '#')
 	{
-		writeReply(client.cliFd, "Invalid channel name. Channel names must start with '#'.\r\n");
+		writeReply(client.cliFd, ERR_NOSUCHCHANNEL(client.nickName, channelName)); // ERR_NOSUCHCHANNEL
 		return;
 	}
 
 	Channel *channel = findChannel(channelName); //olası hata?
 	if (!channel)
 	{
-		writeReply(client.cliFd, "Channel " + channelName + " does not exist.\r\n");
+		writeReply(client.cliFd, ERR_NOSUCHCHANNEL(client.nickName, channelName)); // ERR_NOSUCHCHANNEL
 		return;
 	}
 
 	if (!channel->isClientInChannel(&client))
 	{
-		writeReply(client.cliFd, "You are not in channel " + channelName + ".\r\n");
+		writeReply(client.cliFd, ERR_NOTONCHANNEL(client.nickName, channelName)); // ERR_NOTONCHANNEL
 		return;
 	}
 
@@ -45,15 +45,15 @@ void Server::handleTopic(const std::string& arg, Client& client)
 	{
 		// If no new topic is provided, return the current topic
 		if (channel->getTopic().empty())
-			writeReply(client.cliFd, "331 " + client.nickName + " " + channelName + " :No topic is set\r\n");
+			writeReply(client.cliFd, RPL_NOTOPIC(client.nickName, channelName));
 		else
-			writeReply(client.cliFd, "332 " + client.nickName + " " + channelName + " :" + channel->getTopic() + "\r\n");
+			writeReply(client.cliFd, RPL_TOPIC(client.nickName, channelName, channel->getTopic()));
 	}
 	else
 	{
 		if (!client.isOperator && channel->isTopicRestricted())
 		{
-			writeReply(client.cliFd, "You must be an operator to set the topic.\r\n");
+			writeReply(client.cliFd, ERR_CHANOPRIVSNEEDED(client.nickName, channelName)); // ERR_CHANOPRIVSNEEDED
 			return;
 		}
 		if (newTopic[0] == ':')

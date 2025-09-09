@@ -23,7 +23,7 @@ void Server::checkIfRegistered(Client &client)
 	if (!client.isRegistered && client.passCheck && !client.nickName.empty() && !client.user.empty())
 	{
 		client.isRegistered = true; // Client kayıtlı ise, isRegistered'i true yapar.
-		writeReply(client.cliFd, "001 " + client.nickName + " :Welcome to the IRC Network\r\n");
+		writeReply(client.cliFd, RPL_WELCOME(client.nickName)); // Hoşgeldin mesajı gönderir.
 		std::cout << GREEN << "Client " << client.nickName << " registered successfully." << RESET << std::endl;
 	}
 }

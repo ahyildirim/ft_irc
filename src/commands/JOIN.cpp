@@ -4,13 +4,13 @@ void Server::handleJoin(const std::string& arg, Client& client)
 {
 	if (!client.isRegistered)
 	{
-		writeReply(client.cliFd, "451 :You have not registered\r\n"); // RPL_NOTREGISTERED
+		writeReply(client.cliFd, ERR_NOTREGISTERED(client.nickName)); // RPL_NOTREGISTERED
 		return;
 	}
 
 	if (arg.empty())
 	{
-		writeReply(client.cliFd, "461 " + client.nickName + " JOIN :Not enough parameters\r\n"); // ERR_NEEDMOREPARAMS
+		writeReply(client.cliFd, ERR_NEEDMOREPARAMS(client.nickName, "JOIN")); // ERR_NEEDMOREPARAMS
 		return;
 	}
 
@@ -20,7 +20,7 @@ void Server::handleJoin(const std::string& arg, Client& client)
 
 	if (channelName[0] != '#')
 	{
-		writeReply(client.cliFd, "403 " + client.nickName + " " + channelName + " :No such channel\r\n"); // ERR_NOSUCHCHANNEL (Geçersiz kanal adı için de kullanılabilir)
+		writeReply(client.cliFd, ERR_NOSUCHCHANNEL(client.nickName, channelName)); // ERR_NOSUCHCHANNEL (Geçersiz kanal adı için de kullanılabilir)
 		return;
 	}
 
@@ -38,25 +38,25 @@ void Server::handleJoin(const std::string& arg, Client& client)
 		bool isInvited = channel->isInvited(client.cliFd);
 		if (channel->isClientInChannel(&client))
 		{
-			writeReply(client.cliFd, "443 " + client.nickName + " " + channelName + " :is already on channel\r\n"); // ERR_USERONCHANNEL
+			writeReply(client.cliFd, ERR_USERONCHANNEL(client.nickName, channelName)); // ERR_USERONCHANNEL
 			return;
 		}
 
 		if (channel->isInviteOnly() && !isInvited)
 		{
-			writeReply(client.cliFd, "473 " + client.nickName + " " + channelName + " :Cannot join channel (+i)\r\n"); // ERR_INVITEONLYCHAN
+			writeReply(client.cliFd, ERR_INVITEONLYCHAN(client.nickName, channelName)); // ERR_INVITEONLYCHAN
 			return;
 		}
 
 		if (channel->hasKey() && channel->getKey() != key)
 		{
-			writeReply(client.cliFd, "475 " + client.nickName + " " + channelName + " :Cannot join channel (+k)\r\n"); // ERR_BADCHANNELKEY
+			writeReply(client.cliFd, ERR_BADCHANNELKEY(client.nickName, channelName)); // ERR_BADCHANNELKEY
 			return;
 		}
 
 		if (channel->hasUserLimit() && channel->getClients().size() >= channel->getUserLimit())
 		{
-			writeReply(client.cliFd, "471 " + client.nickName + " " + channelName + " :Cannot join channel (+l)\r\n"); // ERR_CHANNELISFULL
+			writeReply(client.cliFd, ERR_CHANNELISFULL(client.nickName, channelName)); // ERR_CHANNELISFULL
 			return;
 		}
 	}
@@ -67,31 +67,10 @@ void Server::handleJoin(const std::string& arg, Client& client)
 
 	// Topici göster
 	if (!channel->getTopic().empty())
-	{
-		std::string topicMessage = "332 " + client.nickName + " " + channelName + " :" + channel->getTopic() + "\r\n"; // RPL_TOPIC
-		writeReply(client.cliFd, topicMessage);
-	}
+		writeReply(client.cliFd, RPL_TOPIC(client.nickName, channelName, channel->getTopic())); // RPL_TOPIC
 	else
-	{
-		writeReply(client.cliFd, "331 " + client.nickName + " " + channelName + " :No topic is set\r\n"); // RPL_NOTOPIC
-	}
+		writeReply(client.cliFd, RPL_NOTOPIC(client.nickName, channelName)); // RPL_NOTOPIC
 
 	//Kullanıcıları listele
-	std::string namesList = "353 " + client.nickName + " = " + channelName + " :";
-	for (std::map<int, Client *>::iterator it = channel->getClients().begin(); it != channel->getClients().end(); ++it)
-	{
-		Client *cl = it->second;
-		if (cl)
-		{
-			if (cl->isOperator)
-				namesList += "@"; // Operatörleri işaretle
-			namesList += cl->nickName + " ";
-		}
-	}
-	namesList += "\r\n";
-	if (!namesList.empty())
-		namesList = namesList.substr(0, namesList.length() - 1); // Son boşluğu kaldır
-	writeReply(client.cliFd, namesList);
-	writeReply(client.cliFd, "366 " + client.nickName + " " + channelName + " :End of /NAMES list.\r\n"); // RPL_ENDOFNAMES
-
+	this->handleNames(channelName, client);
 }
