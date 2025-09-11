@@ -2,10 +2,10 @@
 
 Client* Server::findClientByNick(const std::string &nick)
 {
-    for (std::map<int, Client>::iterator it = clients.begin(); it != clients.end(); ++it)
+	for (std::map<int, Client>::iterator it = clients.begin(); it != clients.end(); ++it)
 	{
 		if (it->second.nickName == nick)
-			return &it->second;
+		return &it->second;
 	}
     return NULL;
 }
@@ -14,7 +14,7 @@ Channel* Server::findChannel(const std::string& channelName)
 {
 	std::map<std::string, Channel>::iterator it = _channels.find(channelName);
 	if (it != _channels.end())
-		return &it->second;
+	return &it->second;
 	return NULL;
 }
 
@@ -44,13 +44,21 @@ const Server::Command Server::commandTable[] = {
 	{"NAMES", &Server::handleNames},
 };
 
+Server::Server(int port, const std::string &password) : _port(port), _password(password), _reuse(1)
+{
+	createSocket();
+	setAdressAndBind();
+	listenForConnections();
+	start();
+}
+
 void Server::createSocket()
 {
 	if ((this->_server_socket_fd = socket(AF_INET, SOCK_STREAM, 0)) < 0) //Socketi oluştur.
-		std::cerr << RED << "Error creating socket." << RESET << std::endl;
+	std::cerr << RED << "Error creating socket." << RESET << std::endl;
 	else
-		std::cout << GREEN << "Socket created." << RESET << std::endl;
-
+	std::cout << GREEN << "Socket created." << RESET << std::endl;
+	
 	setsockopt(this->_server_socket_fd, SOL_SOCKET, SO_REUSEADDR, &this->_reuse, sizeof(int)); //Socket'i yeniden kullanabilmek için ayarla. Address already in use hatasını önler. 
 }
 
@@ -209,14 +217,6 @@ void Server::start()
 	}
 }
 
-Server::Server(int port, const std::string &password) : _port(port), _password(password), _reuse(1)
-{
-
-	createSocket();
-	setAdressAndBind();
-	listenForConnections();
-	start();
-}
 
 void Server::handleCommand(Client &client, const std::string &command)
 {
