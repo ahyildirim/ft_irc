@@ -48,6 +48,10 @@ class Server
 		Server(int port, const std::string &password);
 		~Server();
 
+		void createSocket();
+		void setAdressAndBind();
+		void listenForConnections();
+		void start();
 		void handleCommand(Client &client, const std::string &command);
 		void checkIfRegistered(Client &client);
 

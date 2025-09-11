@@ -44,17 +44,18 @@ const Server::Command Server::commandTable[] = {
 	{"NAMES", &Server::handleNames},
 };
 
-Server::Server(int port, const std::string &password) : _port(port), _password(password), _reuse(1)
+void Server::createSocket()
 {
-	//Create Socket
 	if ((this->_server_socket_fd = socket(AF_INET, SOCK_STREAM, 0)) < 0) //Socketi oluştur.
 		std::cerr << RED << "Error creating socket." << RESET << std::endl;
 	else
 		std::cout << GREEN << "Socket created." << RESET << std::endl;
 
 	setsockopt(this->_server_socket_fd, SOL_SOCKET, SO_REUSEADDR, &this->_reuse, sizeof(int)); //Socket'i yeniden kullanabilmek için ayarla. Address already in use hatasını önler. 
+}
 
-	//Server Address
+void Server::setAdressAndBind()
+{
 	struct sockaddr_in server_address;
 
 	server_address.sin_family = AF_INET; //IPv4
@@ -66,14 +67,18 @@ Server::Server(int port, const std::string &password) : _port(port), _password(p
 		std::cerr << RED << "Error binding socket." << RESET << std::endl;
 	else
 		std::cout << GREEN << "Socket bound to port " << RESET << this->_port << "." << std::endl;
+}
 
-	//Listen for Connections
+void Server::listenForConnections()
+{
 	if (listen(this->_server_socket_fd, 128) < 0) //Socket'i dinlemeye başla, 128 bağlantı kapasitesi. Daha az yapılabilir, daha çok da yapılabilir. Tercihe bağlı.
 		std::cerr << RED << "Error listening on socket." << RESET << std::endl;
 	else
 		std::cout << GREEN << "Server is listening on port " << RED << this->_port << GREEN << "." << RESET << std::endl;
+}
 
-	//Running the server
+void Server::start()
+{
 	pollfd serverPollFd = {this->_server_socket_fd, POLLIN, 0}; // pollfd structını doldur. fd -> sunucunun dinlediği socketler, events -> POLLIN (sadece okunabilir olaylar için), revents -> 0 (başlangıçta boş).
 	this->pollfds.push_back(serverPollFd); // Vektörün içine pollfd (sunucu socketini) ekler.
 
@@ -202,6 +207,15 @@ Server::Server(int port, const std::string &password) : _port(port), _password(p
 			}
 		}
 	}
+}
+
+Server::Server(int port, const std::string &password) : _port(port), _password(password), _reuse(1)
+{
+
+	createSocket();
+	setAdressAndBind();
+	listenForConnections();
+	start();
 }
 
 void Server::handleCommand(Client &client, const std::string &command)
