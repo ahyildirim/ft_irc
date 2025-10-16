@@ -22,5 +22,6 @@ std::vector<std::string> newToken(const std::string &str);
 std::vector<std::string> splitCommand(const std::string &str, int trim);
 std::vector<std::string> splitBySpace(const std::string& str);
 void writeReply(int fd, const std::string& reply);
+void stripNonPrintable(std::string &s);
 
 #endif

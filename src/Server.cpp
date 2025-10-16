@@ -226,10 +226,10 @@ void Server::handleCommand(Client &client, const std::string &command)
 {
 	std::vector<std::string> tokens = splitCommand(command, 1); // Komutu ayırır. İlk kelime komut, ikinci kelime argüman olur.
 
-	(void)client; //Silinecek, warning i engellemek için kullanıldı.
 	if (tokens.empty())
 		return ;
 	
+	stripNonPrintable(tokens[0]); // Komuttaki yazdırılamayan karakterleri temizler.
 	std::string _command = tokens[0];
 	std::string arg = (tokens.size() > 1) ? tokens[1] : ""; // Eğer ikinci kelime varsa arg olarak alır, yoksa boş string alır.
 

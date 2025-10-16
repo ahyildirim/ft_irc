@@ -99,3 +99,15 @@ int stoi_c98(const std::string &str)
 {
     return std::atoi(str.c_str());
 }
+
+void stripNonPrintable(std::string &s)
+{
+    std::string::iterator dst = s.begin();
+    for (std::string::iterator it = s.begin(); it != s.end(); ++it)
+    {
+        unsigned char c = static_cast<unsigned char>(*it);
+        if (std::isprint(c))
+            *dst++ = *it;
+    }
+    s.erase(dst, s.end());
+}

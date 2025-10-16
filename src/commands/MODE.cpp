@@ -28,10 +28,14 @@ void Server::handleMode(const std::string &arg, Client& client)
     if (params.size() == 1)
     {
         std::string modeString = "+";
-        if (channel->isInviteOnly()) modeString += "i";
-        if (channel->isTopicRestricted()) modeString += "t";
-        if (channel->hasKey()) modeString += "k";
-        if (channel->hasUserLimit()) modeString += "l";
+        if (channel->isInviteOnly()) 
+            modeString += "i";
+        if (channel->isTopicRestricted()) 
+            modeString += "t";
+        if (channel->hasKey()) 
+            modeString += "k";
+        if (channel->hasUserLimit()) 
+            modeString += "l";
 
         writeReply(client.cliFd, RPL_CHANNELMODEIS(client.nickName, channelName, modeString,
                                               channel->hasKey() ? channel->getKey() : "",
@@ -82,13 +86,9 @@ void Server::handleMode(const std::string &arg, Client& client)
                     continue;
                 }
                 if (adding)
-                {
                     channel->setKey(modeParams[paramIndex++]);
-                }
                 else
-                {
                     channel->setKey("");
-                }
                 break;
             case 'o':
                 if (paramIndex >= modeParams.size())
