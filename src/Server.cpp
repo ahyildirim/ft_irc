@@ -156,6 +156,7 @@ void Server::start()
 				client.buffer += buffer; // Client'ın buffer'ına okunan veri eklenir.
 			}
 
+			bool clientWasDisconnected = false;
 			//Komutları ayıkla ve işle
 			size_t pos;
 			while ((pos = client.buffer.find("\n")) != std::string::npos) // Buffer'da newline bulunursa komut var demektir. Bu komut ayıklanır
@@ -169,14 +170,17 @@ void Server::start()
 
 				if (!client.passCheck && !client.isCap)
 				{
+					std::cout << RED << "Client disconnected due to wrong password: " << GREEN << client.ipAddress << ":" << client.port << RESET << std::endl; // Client'ın bağlantısı kesildiğinde mesaj yazdırılır.
 					close(client.cliFd);
 					this->clients.erase(client.cliFd); // Client da clients haritasından silinir.
 					pollfds.erase(pollfds.begin() + i); // Client bağlantısı kapatılır ve pollfds vektöründen çıkarılır.
-					std::cout << RED << "Client disconnected due to wrong password: " << GREEN << client.ipAddress << ":" << client.port << RESET << std::endl; // Client'ın bağlantısı kesildiğinde mesaj yazdırılır.
 					--i;
+					clientWasDisconnected = true;
 					break;
 				}
 			}
+			if (clientWasDisconnected)
+				continue;
 			//Verileri yazma
 			if (pollfds[i].revents & POLLOUT)
 			{
