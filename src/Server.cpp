@@ -131,11 +131,11 @@ void Server::start()
 			Client &client = this->clients[clientFd]; // clients haritasından client'ı alır.
 			if (client.toBeDisconnected)
 			{
+				std::cout << RED << "Client disconnected(toBeDisconnected): " << GREEN << client.ipAddress << ":" << client.port << RESET << std::endl; // Client'ın bağlantısı kesildiğinde mesaj yazdırılır.
 				close(client.cliFd); // Eğer client toBeDisconnected ise, bağlantıyı kapatır.
 				this->clients.erase(client.cliFd); // clients haritasından client'ı siler. (?)
 				pollfds.erase(pollfds.begin() + i); // pollfds vektöründen client'ı siler.
 				--i; // Döngüdeki indeksi azaltır.
-				std::cout << RED << "Client disconnected(toBeDisconnected): " << GREEN << client.ipAddress << ":" << client.port << RESET << std::endl; // Client'ın bağlantısı kesildiğinde mesaj yazdırılır.
 				continue;
 			}
 			if (pollfds[i].revents & POLLIN) // Eğer client socketinde okunabilir bir olay varsa
@@ -145,11 +145,11 @@ void Server::start()
 				if (readed <= 0)
 				{
 					this->handleQuit("Connection closed by client.", client); // Eğer veri okunamazsa, client bağlantısı kapatılır ve handleQuit fonksiyonu çağrılır.
+					std::cout << RED << "Client disconnected(recv): " << GREEN << client.ipAddress << ":" << client.port << RESET << std::endl; // Client'ın bağlantısı kesildiğinde mesaj yazdırılır.
 					close(client.cliFd);
 					this->clients.erase(client.cliFd); // Client da clients haritasından silinir. (?)
 					pollfds.erase(pollfds.begin() + i); // Eğer veri okunamazsa, client bağlantısı kapatılır ve pollfds vektöründen çıkarılır.
 					--i;
-					std::cout << RED << "Client disconnected(recv): " << GREEN << client.ipAddress << ":" << client.port << RESET << std::endl; // Client'ın bağlantısı kesildiğinde mesaj yazdırılır.
 					continue;
 				}
 				buffer[readed] = '\0'; // Okunan verinin sonuna null karakter eklenir.
@@ -209,8 +209,8 @@ void Server::start()
 			Channel& channel = it->second;
 			if (channel.isToBeRemoved()) // Eğer kanal silinmesi gerekiyorsa
 			{
-				_channels.erase(it); // Kanalı haritadan siler.
 				std::cout << RED << "Channel " << channel.getName() << " has been removed." << RESET << std::endl;
+				_channels.erase(it); // Kanalı haritadan siler.
 				break; // Kanal silindiği için döngüden çıkılır.
 			}
 		}
